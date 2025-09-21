@@ -1,0 +1,44 @@
+# Email configuration for RARSMS notifications
+# Copy this to your main config.yaml under the 'email' section
+
+email:
+  # SMTP server configuration
+  smtp:
+    host: "smtp.gmail.com"          # SMTP server hostname
+    port: 587                       # SMTP port (587 for TLS, 465 for SSL)
+    username: ""                    # SMTP username (usually your email)
+    password: ""                    # SMTP password or app-specific password
+    tls: true                       # Use TLS encryption
+    skip_verify: false              # Skip TLS certificate verification (dev only)
+
+  # Email addresses
+  from_address: "rarsms@rars.org"   # From email address
+  from_name: "RARSMS System"        # From display name
+
+  # Admin notification settings
+  admin_addresses:
+    - "admin1@rars.org"             # Primary admin email
+    - "admin2@rars.org"             # Secondary admin email
+
+  # Email templates and settings
+  templates:
+    admin_approval_subject: "RARSMS Account Approval Required - {{.Callsign}}"
+    user_pending_subject: "RARSMS Account Under Review - {{.Callsign}}"
+    user_approved_subject: "RARSMS Account Activated - {{.Callsign}}"
+
+  # Rate limiting
+  rate_limit:
+    enabled: true
+    max_per_hour: 100               # Max emails per hour
+    max_per_day: 500                # Max emails per day
+
+  # Retry settings
+  retry:
+    max_attempts: 3
+    delay_seconds: 30
+
+  # Development settings
+  development:
+    enabled: false                  # Set to true for dev mode
+    log_only: false                 # Only log emails, don't send
+    test_recipient: ""              # Send all emails to this address in dev mode

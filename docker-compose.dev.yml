@@ -1,0 +1,43 @@
+# Development overrides for Docker Compose
+# Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  pocketbase:
+    environment:
+      # Development email settings
+      EMAIL_DEV_MODE: "true"
+      EMAIL_LOG_ONLY: "true"
+      EMAIL_TEST_RECIPIENT: "dev@localhost"
+    volumes:
+      # Mount source for live editing
+      - ./services/web-dashboard/pb_hooks:/app/pb_hooks
+      - ./services/web-dashboard/pb_public:/app/pb_public
+
+  aprs-connector:
+    environment:
+      # Development logging
+      LOG_LEVEL: "debug"
+      LOG_FORMAT: "text"
+      APRS_CONNECTOR_RECONNECT_DELAY: "5"
+    # Override for development build
+    build:
+      context: ./services/aprs-connector
+      dockerfile: Dockerfile
+    volumes:
+      # Mount config for live changes
+      - ./config:/app/config
+
+  discord-bot:
+    environment:
+      # Development logging
+      LOG_LEVEL: "debug"
+      LOG_FORMAT: "text"
+      DISCORD_BOT_RECONNECT_DELAY: "5"
+    # Override for development build
+    build:
+      context: ./services/discord-bot
+      dockerfile: Dockerfile
+    volumes:
+      # Mount source for live editing
+      - ./services/discord-bot/src:/app/src
+      - ./config:/app/config

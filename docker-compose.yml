@@ -1,0 +1,172 @@
+services:
+  # Setup service - runs once to create configuration files
+  setup:
+    image: alpine:latest
+    container_name: rarsms-setup
+    profiles: ["setup"]
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: |
+      sh -c "
+        echo '🚀 RARSMS Setup'
+        echo '==============='
+
+        # Create .env if it doesn't exist
+        if [ ! -f .env ]; then
+          echo 'Creating .env from example...'
+          cp .env.example .env
+          echo 'Please edit .env with your actual configuration values'
+        else
+          echo '.env file already exists'
+        fi
+
+        # Create config.yaml if it doesn't exist
+        if [ ! -f config/config.yaml ]; then
+          echo 'Creating config.yaml from example...'
+          cp config/config.example.yaml config/config.yaml
+        else
+          echo 'config.yaml already exists'
+        fi
+
+        # Create data directories
+        mkdir -p data/pocketbase
+        echo 'Data directories created'
+
+        echo ''
+        echo '✅ Setup complete!'
+        echo 'Next steps:'
+        echo '1. Edit .env with your configuration'
+        echo '2. Run: docker compose up -d'
+        echo '3. Access: http://localhost:8090'
+      "
+
+  # PocketBase database and web dashboard
+  pocketbase:
+    build: ./services/web-dashboard
+    container_name: rarsms-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data/pocketbase:/app/pb_data
+      - ./config:/app/config:ro
+    environment:
+      # Email configuration
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_TLS: ${SMTP_TLS:-true}
+      FROM_EMAIL: ${FROM_EMAIL:-rarsms@rars.org}
+      FROM_NAME: ${FROM_NAME:-RARSMS System}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-admin@rars.org}
+      SYSTEM_URL: ${SYSTEM_URL:-http://localhost:8090}
+
+      # Development settings
+      EMAIL_DEV_MODE: ${EMAIL_DEV_MODE:-false}
+      EMAIL_LOG_ONLY: ${EMAIL_LOG_ONLY:-false}
+      EMAIL_TEST_RECIPIENT: ${EMAIL_TEST_RECIPIENT:-}
+    networks:
+      - rarsms-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8090/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # APRS connector service
+  aprs-connector:
+    build: ./services/aprs-connector
+    container_name: rarsms-aprs
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config:ro
+    environment:
+      # APRS configuration
+      APRS_CALLSIGN: ${APRS_CALLSIGN:-RARSMS}
+      APRS_PASSCODE: ${APRS_PASSCODE:-}
+      APRS_SERVER: ${APRS_SERVER:-rotate.aprs2.net}
+      APRS_PORT: ${APRS_PORT:-14580}
+      APRS_FILTER: ${APRS_FILTER:-t/m}
+
+      # Database configuration
+      DATABASE_URL: http://pocketbase:8090
+
+      # Service configuration
+      APRS_CONNECTOR_ENABLED: ${APRS_CONNECTOR_ENABLED:-true}
+      APRS_CONNECTOR_RECONNECT_DELAY: ${APRS_CONNECTOR_RECONNECT_DELAY:-30}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    networks:
+      - rarsms-network
+    healthcheck:
+      test: ["CMD", "/app/aprs-connector", "-version"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Discord bot service
+  discord-bot:
+    build: ./services/discord-bot
+    container_name: rarsms-discord
+    restart: unless-stopped
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+    volumes:
+      - ./config:/app/config:ro
+    environment:
+      # Discord configuration
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+      DISCORD_GUILD_ID: ${DISCORD_GUILD_ID:-}
+      DISCORD_CHANNEL_ID: ${DISCORD_CHANNEL_ID:-}
+      DISCORD_USE_THREADS: ${DISCORD_USE_THREADS:-true}
+      DISCORD_COMMAND_PREFIX: ${DISCORD_COMMAND_PREFIX:-!}
+
+      # Database configuration
+      DATABASE_URL: http://pocketbase:8090
+
+      # Service configuration
+      DISCORD_BOT_ENABLED: ${DISCORD_BOT_ENABLED:-true}
+      DISCORD_BOT_RECONNECT_DELAY: ${DISCORD_BOT_RECONNECT_DELAY:-10}
+
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-json}
+    networks:
+      - rarsms-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Utility service for management tasks
+  management:
+    image: alpine:latest
+    container_name: rarsms-management
+    profiles: ["management"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - .:/app
+    working_dir: /app
+    entrypoint: ["sh"]
+    command: ["-c", "echo 'Management container ready. Use: docker compose run --rm management sh'"]
+
+networks:
+  rarsms-network:
+    driver: bridge
+    name: rarsms-network
+
+volumes:
+  pocketbase-data:
+    driver: local
