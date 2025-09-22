@@ -119,6 +119,26 @@ class APRSProtocol(BaseProtocol):
             logger.error(f"Error disconnecting APRS protocol '{self.name}': {e}")
             return False
 
+    def validate_message(self, message: Message) -> tuple[bool, str]:
+        """Validate if a message can be sent via APRS with proper packet formatting"""
+        logger.info(f"🔍 APRS validating message: content='{message.content}', source='{message.source_protocol}:{message.source_id}'")
+
+        if not self.capabilities.can_send:
+            return False, f"{self.name} does not support sending messages"
+
+        if message.message_type == MessageType.POSITION and not self.capabilities.supports_position:
+            return False, f"{self.name} does not support position messages"
+
+        # For APRS messages, calculate the actual packet length including formatting
+        if message.message_type == MessageType.TEXT:
+            # APRS message format: :ADDRESSEE :message
+            # Addressee is 9 characters + 2 colons = 11 characters overhead
+            max_content_len = 67 - 11  # 56 characters for actual message content
+            if len(message.content) > max_content_len:
+                return False, f"Message content too long for APRS (max: {max_content_len}, got: {len(message.content)} chars): '{message.content}'"
+
+        return True, "Message is valid"
+
     async def send_message(self, message: Message) -> bool:
         """Send a message via APRS-IS"""
         try:
@@ -132,8 +152,9 @@ class APRSProtocol(BaseProtocol):
                 logger.error(f"Invalid message for APRS: {error}")
                 return False
 
-            # Get target ID for APRS
-            target_callsign = message.target_ids.get('aprs', 'CQ')
+            # Get target ID for APRS and ensure uppercase for consistency
+            target_callsign = message.target_ids.get('aprs', 'CQ').upper()
+            logger.info(f"🔍 APRS sending to target: '{target_callsign}' (from target_ids: {message.target_ids})")
 
             # Format based on message type
             if message.message_type == MessageType.POSITION:
@@ -143,6 +164,7 @@ class APRSProtocol(BaseProtocol):
 
             # Send packet
             packet_data = f"{self.callsign}>APRS,TCPIP*:{aprs_packet}\r\n"
+            logger.info(f"🔍 Sending APRS packet: '{packet_data.strip()}'")
             await asyncio.get_event_loop().run_in_executor(
                 None, self.socket.send, packet_data.encode('utf-8')
             )
@@ -204,7 +226,8 @@ class APRSProtocol(BaseProtocol):
                     )
 
                     if not data:
-                        logger.warning("APRS-IS connection closed")
+                        logger.warning("APRS-IS connection closed by server")
+                        self.is_connected = False
                         break
 
                     self.buffer += data.decode('utf-8', errors='ignore')
@@ -220,14 +243,17 @@ class APRSProtocol(BaseProtocol):
                 except asyncio.TimeoutError:
                     # Send keepalive
                     try:
+                        logger.debug("Sending APRS keepalive")
                         await asyncio.get_event_loop().run_in_executor(
                             None, self.socket.send, b"#keepalive\r\n"
                         )
-                    except:
+                    except Exception as e:
+                        logger.error(f"Failed to send APRS keepalive: {e}")
                         break
 
                 except Exception as e:
                     logger.error(f"Error in APRS read loop: {e}")
+                    self.is_connected = False
                     break
 
         except asyncio.CancelledError:
@@ -396,15 +422,29 @@ class APRSProtocol(BaseProtocol):
     def _format_message_packet(self, message: Message, target_callsign: str) -> str:
         """Format message as APRS message packet"""
         # APRS message format: :ADDRESSEE :message{MSGNO}
-        addressee = target_callsign.ljust(9)  # Pad to 9 characters
+        # Addressee must be exactly 9 characters, padded with spaces
+        # Convert to uppercase for consistency
+        addressee = target_callsign.upper().ljust(9)  # Convert to uppercase and pad to 9 characters
         msg_content = message.content
 
+        # Generate message number for acknowledgment tracking
+        # Use last 3 digits of current timestamp for simplicity
+        import time
+        msg_number = str(int(time.time()))[-3:]
+
+        # Account for message number in length calculation
+        msg_number_part = f"{{{msg_number}"
+        max_content_len = 67 - 11 - len(msg_number_part)  # Total limit minus addressee, formatting, and msg number
+
         # Truncate if too long
-        max_content_len = 67 - 11  # Total limit minus addressee and formatting
         if len(msg_content) > max_content_len:
             msg_content = msg_content[:max_content_len-3] + "..."
 
-        return f":{addressee}:{msg_content}"
+        # Log the formatted components to verify format
+        logger.debug(f"🔍 APRS addressee field: '{addressee}' (length: {len(addressee)})")
+        logger.debug(f"🔍 APRS message number: '{msg_number}'")
+
+        return f":{addressee}:{msg_content}{msg_number_part}"
 
     def _format_position_packet(self, message: Message) -> str:
         """Format message as APRS position packet"""

@@ -147,7 +147,7 @@ class BaseProtocol(ABC):
 
         if (self.capabilities.max_message_length and
             len(message.content) > self.capabilities.max_message_length):
-            return False, f"Message too long for {self.name} (max: {self.capabilities.max_message_length})"
+            return False, f"Message too long for {self.name} (max: {self.capabilities.max_message_length}, got: {len(message.content)} chars): '{message.content}'"
 
         return True, "Message is valid"
 

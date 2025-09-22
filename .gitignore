@@ -20,6 +20,9 @@ config/local.yml
 config/local.json
 docker-compose.override.yml
 
+# Main configuration file (contains credentials - NEVER commit!)
+config.yaml
+
 # User-specific callsign files (may contain personal info)
 callsigns.txt.local
 callsigns.txt.backup

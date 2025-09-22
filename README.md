@@ -53,23 +53,28 @@ emergency_msg = create_emergency_message(
 ```bash
 git clone <repository>
 cd rarsms
-cp .env.example .env
+cp config.example.yaml config.yaml
 ```
 
 ### 2. **Configure Credentials**
-Edit `.env` with your credentials:
-```bash
+Edit `config.yaml` with your credentials:
+```yaml
 # APRS Configuration (for amateur radio)
-APRS_CALLSIGN=YOUR-CALL
-APRS_PASSCODE=12345
+aprs_callsign: "YOUR-CALL"
+aprs_passcode: "12345"
 
-# Discord Configuration (for chat integration)
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+# Discord Configuration (for bidirectional communication)
+discord_bot_token: "your_bot_token"
+discord_channel_id: "your_channel_id"
+discord_guild_id: "your_guild_id"  # optional
 
-# Optional: Discord bot for bidirectional communication
-DISCORD_BOT_TOKEN=your_bot_token
-DISCORD_CHANNEL_ID=channel_to_monitor
+# Message filtering
+message_prefix: "RARSMS"
+require_prefix: true
+block_position_updates: true
 ```
+
+**⚠️ Important**: Never commit `config.yaml` to version control! It contains sensitive credentials.
 
 ### 3. **Configure Authorized Callsigns**
 Edit `callsigns.txt`:
@@ -122,24 +127,66 @@ KJ4XYZ>APRS,TCPIP*::W4XYZ  :Direct message without prefix
 #### **📍 ALWAYS ROUTED:**
 - Position packets from authorized callsigns (regardless of content)
 
+## 🤖 Discord Bot Setup
+
+To enable bidirectional communication, you'll need to create a Discord bot:
+
+### 1. **Create Discord Application**
+1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click "New Application" and give it a name (e.g., "RARSMS Bridge")
+3. Go to the "Bot" section and click "Add Bot"
+4. Copy the bot token (keep this secret!)
+
+### 2. **Configure Bot Permissions**
+In the "Bot" section, enable these privileged intents:
+- ✅ Message Content Intent
+- ✅ Server Members Intent (optional)
+
+### 3. **Invite Bot to Server**
+1. Go to "OAuth2" → "URL Generator"
+2. Select scopes: `bot`
+3. Select bot permissions:
+   - ✅ Send Messages
+   - ✅ View Channels
+   - ✅ Read Message History
+   - ✅ Add Reactions
+4. Use the generated URL to invite the bot to your server
+
+### 4. **Get Channel ID**
+1. Enable Developer Mode in Discord (User Settings → Advanced → Developer Mode)
+2. Right-click on your channel → Copy ID
+3. Use this as `discord_channel_id` in your config
+
 ## 🔧 Configuration
 
-### **Environment Variables**
+### **Configuration File (`config.yaml`)**
 
-#### **Required:**
-- `APRS_CALLSIGN`: Your amateur radio callsign
-- `APRS_PASSCODE`: APRS-IS passcode ([calculate here](https://apps.magicbug.co.uk/passcode/))
+Copy `config.example.yaml` to `config.yaml` and configure the following:
 
-#### **Optional:**
-- `DISCORD_WEBHOOK_URL`: Discord webhook for sending messages
-- `DISCORD_BOT_TOKEN`: Discord bot token for receiving messages
-- `DISCORD_CHANNEL_ID`: Discord channel to monitor
-- `MESSAGE_PREFIX`: Custom prefix (default: "RARSMS")
-- `REQUIRE_PREFIX`: Enable/disable prefix requirement (default: true)
+#### **Required APRS Settings:**
+- `aprs_callsign`: Your amateur radio callsign
+- `aprs_passcode`: APRS-IS passcode ([calculate here](https://apps.magicbug.co.uk/passcode/))
+- `aprs_server`: APRS-IS server (default: "rotate.aprs2.net")
+- `aprs_port`: APRS-IS port (default: 14580)
 
-### **Advanced Configuration**
+#### **Required Discord Settings:**
+- `discord_bot_token`: Discord bot token from [Discord Developer Portal](https://discord.com/developers/applications)
+- `discord_channel_id`: Discord channel ID for bidirectional communication
+- `discord_guild_id`: (Optional) Discord server ID for faster startup
 
-#### **Multiple Protocols** (`config.yaml`):
+#### **Message Filtering:**
+- `message_prefix`: Custom prefix (default: "RARSMS")
+- `require_prefix`: Enable/disable prefix requirement (default: true)
+- `block_position_updates`: Block noisy position updates (default: true)
+
+#### **Geographic Filtering:**
+- `filter_lat`: Latitude for APRS packet filtering
+- `filter_lon`: Longitude for APRS packet filtering
+- `filter_distance`: Filter radius in kilometers
+
+### **Environment Variable Override**
+
+You can also use environment variables to override config.yaml values (useful for Docker):
 ```yaml
 protocols:
   aprs_emergency:
@@ -189,11 +236,45 @@ KJ4XYZ>APRS,TCPIP*::RARSMS   :Anyone monitoring 146.52?
 ```
 → Discord: `[APRS] KJ4XYZ: Anyone monitoring 146.52?`
 
-#### **Discord → APRS (Bidirectional)**
+#### **Discord → APRS (Bot Mode Only)**
 ```
-@username: RARSMS Weather is clearing up, going mobile
+Reply to APRS message: APRS W4ABC Weather is clearing up, going mobile
 ```
 → APRS: `USERNAME:Weather is clearing up, going mobile`
+
+## 🔄 Discord Bot Reply System
+
+### **How to Reply to APRS Messages**
+
+When using bot mode, RARSMS tracks APRS messages in Discord and allows replies:
+
+1. **APRS message appears** in Discord with reply instructions
+2. **Use Discord's reply function** (right-click → Reply)
+3. **Format your reply**: `APRS <CALLSIGN> <your message>`
+4. **Bot validates** the callsign matches the original sender
+5. **Message routes back** to APRS with confirmation reaction
+
+### **Reply Format Examples**
+
+#### **✅ Valid Replies:**
+```
+APRS W4ABC Yes, I'm monitoring 146.52
+APRS KJ4XYZ-9 Thanks for the weather update
+APRS N4DEF Roger, see you at the meeting
+```
+
+#### **❌ Invalid Replies:**
+```
+W4ABC Yes (missing "APRS" prefix)
+APRS WRONG-CALL Message (wrong callsign)
+Just replying normally (not using reply function)
+```
+
+### **Bot Features**
+- **Message Tracking**: Remembers last 100 APRS messages for replies
+- **Callsign Validation**: Ensures replies go to correct station
+- **Visual Feedback**: 📡 for success, ❌ for errors
+- **Rich Formatting**: APRS messages shown with maps and metadata
 
 ### **Universal Message Adaptation**
 

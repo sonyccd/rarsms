@@ -1,0 +1,38 @@
+# RARSMS Communication Bridge Configuration Example
+# Copy this file to config.yaml and fill in your actual values
+# Environment variables take precedence over these values
+
+# ====================================================================
+# APRS Configuration
+# ====================================================================
+aprs_server: "rotate.aprs2.net"
+aprs_port: 14580
+aprs_callsign: "YOUR_CALLSIGN"          # Your amateur radio callsign
+aprs_passcode: "YOUR_APRS_PASSCODE"     # Your APRS-IS passcode (get from https://apps.magicbug.co.uk/passcode/)
+
+# Geographic filter (configure for your area)
+filter_lat: "35.7796"                   # Latitude (Raleigh, NC example)
+filter_lon: "-78.6382"                  # Longitude (Raleigh, NC example)
+filter_distance: "100"                  # Filter radius in kilometers
+
+# ====================================================================
+# Discord Configuration
+# ====================================================================
+discord_bot_token: "YOUR_DISCORD_BOT_TOKEN"     # Discord bot token from https://discord.com/developers/applications
+discord_channel_id: "YOUR_CHANNEL_ID"           # Discord channel ID for messages
+discord_guild_id: "YOUR_GUILD_ID"               # Discord server (guild) ID (optional)
+
+# ====================================================================
+# Message Filtering
+# ====================================================================
+message_prefix: "RARSMS"                # Prefix required for routing messages (change if desired)
+require_prefix: true                    # Whether messages must have the prefix to be routed
+block_position_updates: true           # Block noisy position updates from being forwarded
+
+# ====================================================================
+# Advanced Configuration (optional)
+# ====================================================================
+# authorized_callsigns:                 # List of authorized callsigns (empty = allow all)
+#   - "W4ABC"
+#   - "KJ4XYZ"
+#   - "N4DEF"

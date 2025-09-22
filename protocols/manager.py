@@ -166,18 +166,20 @@ class ProtocolManager:
                     ContentPriority.MEDIUM
                 )
 
-            # Add metadata as low-priority content
-            for key, value in message.metadata.items():
-                if key not in ['position', 'raw_packet', 'addressed_to_rarsms', 'has_rarsms_prefix']:
-                    universal_msg.add_metadata(key, str(value), ContentPriority.LOW)
+            # Don't add metadata as content for APRS replies - keep them clean
+            if not message.metadata.get('reply_to_aprs', False):
+                # Add metadata as low-priority content
+                for key, value in message.metadata.items():
+                    if key not in ['position', 'raw_packet', 'addressed_to_rarsms', 'has_rarsms_prefix']:
+                        universal_msg.add_metadata(key, str(value), ContentPriority.LOW)
 
-            # Add source identification
-            universal_msg.add_content_block(
-                f"From: {message.source_protocol}:{message.source_id}",
-                ContentPriority.MEDIUM,
-                'metadata',
-                can_omit=True
-            )
+                # Add source identification
+                universal_msg.add_content_block(
+                    f"From: {message.source_protocol}:{message.source_id}",
+                    ContentPriority.MEDIUM,
+                    'metadata',
+                    can_omit=True
+                )
 
             # Copy routing information
             universal_msg.target_protocols = message.target_protocols.copy()
@@ -274,18 +276,24 @@ class ProtocolManager:
             if len(self.message_history) > self.max_history:
                 self.message_history.pop(0)
 
-            # Convert to universal format
-            universal_message = self._convert_message_to_universal(message)
+            # Check if this is an APRS reply that should bypass universal conversion
+            if message.metadata.get('reply_to_aprs', False):
+                logger.info(f"📨 Received {message.message_type.value} message from {message.source_protocol}:{message.source_id}")
+                # Route directly without universal conversion to preserve target_ids
+                asyncio.create_task(self._route_message(message))
+            else:
+                # Convert to universal format
+                universal_message = self._convert_message_to_universal(message)
 
-            # Add to universal history
-            self.universal_message_history.append(universal_message)
-            if len(self.universal_message_history) > self.max_history:
-                self.universal_message_history.pop(0)
+                # Add to universal history
+                self.universal_message_history.append(universal_message)
+                if len(self.universal_message_history) > self.max_history:
+                    self.universal_message_history.pop(0)
 
-            logger.info(f"📨 Received {universal_message.message_type.value} message from {message.source_protocol}:{message.source_id}")
+                logger.info(f"📨 Received {universal_message.message_type.value} message from {message.source_protocol}:{message.source_id}")
 
-            # Apply routing rules with universal format
-            asyncio.create_task(self._route_universal_message(universal_message))
+                # Apply routing rules with universal format
+                asyncio.create_task(self._route_universal_message(universal_message))
 
         except Exception as e:
             logger.error(f"Error handling received message: {e}")
@@ -359,6 +367,7 @@ class ProtocolManager:
                             routed_message = self._prepare_message_for_target(
                                 message, target_protocol_name
                             )
+                            logger.info(f"🔍 Routing to {target_protocol_name}: original_content='{message.content}', routed_content='{routed_message.content}'")
 
                             # Send message
                             success = await target_protocol.send_message(routed_message)
@@ -410,6 +419,9 @@ class ProtocolManager:
 
         # Add target protocol
         routed_message.add_target(target_protocol)
+
+        # Copy target_ids from original message
+        routed_message.target_ids = message.target_ids.copy()
 
         # Set thread/reply information if supported
         routed_message.thread_id = message.thread_id
