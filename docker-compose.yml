@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  rarsms:
+    build: .
+    container_name: rarsms-bridge
+    environment:
+      - APRS_CALLSIGN=${APRS_CALLSIGN}
+      - APRS_PASSCODE=${APRS_PASSCODE}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - APRS_SERVER=rotate.aprs2.net
+      - APRS_PORT=14580
+      - APRS_FILTER_LAT=35.7796
+      - APRS_FILTER_LON=-78.6382
+      - APRS_FILTER_DISTANCE=100
+    volumes:
+      - ./callsigns.txt:/app/callsigns.txt:ro
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,129 @@
+# RARSMS Communication Bridge Configuration
+# Environment variables take precedence over these values
+
+# ====================================================================
+# CORE PROTOCOL CONFIGURATION
+# ====================================================================
+
+# APRS-IS Configuration
+aprs_server: "rotate.aprs2.net"
+aprs_port: 14580
+# aprs_callsign: "YOUR-CALL"      # Set via APRS_CALLSIGN env var
+# aprs_passcode: "12345"          # Set via APRS_PASSCODE env var
+
+# APRS Message Filtering
+message_prefix: "RARSMS"          # Prefix required for APRS messages to be routed
+require_prefix: true              # Set to false to route all messages from authorized callsigns
+
+# Primary Discord Configuration (for backward compatibility)
+# discord_webhook_url: "https://discord.com/api/webhooks/..."  # Set via DISCORD_WEBHOOK_URL env var
+# discord_bot_token: "YOUR_BOT_TOKEN"                          # For bidirectional Discord support
+# discord_channel_id: "CHANNEL_ID"                             # Channel to monitor for incoming messages
+
+# Geographic filter for APRS packets (Raleigh, NC area by default)
+filter_lat: "35.7796"     # Latitude for filter center
+filter_lon: "-78.6382"    # Longitude for filter center
+filter_distance: "100"    # Distance in km from center point
+
+# ====================================================================
+# ADDITIONAL COMMUNICATION PROTOCOLS
+# ====================================================================
+
+protocols:
+  # Additional APRS-IS connections
+  # aprs_secondary:
+  #   enabled: true
+  #   type: "aprs"
+  #   aprs_server: "second.aprs.net"
+  #   aprs_callsign: "N0CALL-2"
+  #   aprs_passcode: "12345"
+  #   authorized_callsigns: ["W4ABC", "KJ4XYZ"]
+
+  # Additional Discord channels
+  # discord_emergency:
+  #   enabled: true
+  #   type: "discord"
+  #   discord_webhook_url: "https://discord.com/api/webhooks/EMERGENCY_WEBHOOK"
+  #   discord_bot_token: "BOT_TOKEN"
+  #   discord_channel_id: "EMERGENCY_CHANNEL_ID"
+  #   discord_username: "RARSMS Emergency"
+
+  # Future protocol examples:
+  # slack_main:
+  #   enabled: false
+  #   type: "slack"
+  #   slack_webhook_url: "https://hooks.slack.com/services/..."
+  #   slack_bot_token: "xoxb-..."
+  #   slack_channel: "#amateur-radio"
+
+  # matrix_bridge:
+  #   enabled: false
+  #   type: "matrix"
+  #   matrix_server: "matrix.org"
+  #   matrix_user: "@rarsms:matrix.org"
+  #   matrix_password: "password"
+  #   matrix_room: "#amateur-radio:matrix.org"
+
+# ====================================================================
+# MESSAGE ROUTING CONFIGURATION
+# ====================================================================
+
+routing:
+  # Emergency messages routing
+  emergency_alerts:
+    enabled: true
+    source_protocols: ["aprs_main"]
+    target_protocols: ["discord_main", "discord_emergency"]
+    message_types: ["emergency"]
+    source_filter: ".*"  # All sources
+    bidirectional: false
+
+  # Position updates routing
+  position_sharing:
+    enabled: true
+    source_protocols: ["aprs_main"]
+    target_protocols: ["discord_main"]
+    message_types: ["position"]
+    source_filter: "^(W4|K4|N4|KJ4).*"  # Only specific call areas
+    bidirectional: false
+
+  # General text message routing
+  text_bridging:
+    enabled: true
+    source_protocols: ["aprs_main", "discord_main"]
+    target_protocols: ["discord_main", "aprs_main"]
+    message_types: ["text"]
+    bidirectional: true
+
+# ====================================================================
+# LEGACY NOTIFICATION SYSTEM (Backward Compatibility)
+# ====================================================================
+
+notifiers:
+  # Additional Discord instances (beyond the primary one)
+  # discord_secondary:
+  #   enabled: true
+  #   discord_webhook_url: "https://discord.com/api/webhooks/OTHER_WEBHOOK"
+  #   discord_username: "RARSMS Secondary"
+
+  # Slack integration example
+  # slack:
+  #   enabled: false
+  #   slack_webhook_url: "https://hooks.slack.com/services/..."
+  #   slack_username: "RARSMS Bridge"
+  #   slack_channel: "#amateur-radio"
+
+  # Email notifications example
+  # email:
+  #   enabled: false
+  #   smtp_server: "smtp.gmail.com"
+  #   smtp_port: 587
+  #   username: "your-email@gmail.com"
+  #   password: "your-app-password"
+  #   to_addresses: ["alerts@example.com"]
+
+  # File logging example
+  # file:
+  #   enabled: false
+  #   log_file: "/app/logs/aprs_notifications.log"
+  #   max_file_size: "10MB"

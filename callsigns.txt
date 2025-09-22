@@ -1,0 +1,6 @@
+# Authorized callsigns for RARSMS bridge
+# One callsign per line, comments start with #
+# Base callsigns only (SSIDs will be handled automatically)
+
+# Example callsigns (replace with actual club member callsigns)
+kk4pwj
