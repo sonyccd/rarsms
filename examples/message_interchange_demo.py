@@ -68,14 +68,6 @@ def demo_message_adaptation():
             supports_attachments=True,
             max_message_length=2000  # Discord limit
         ),
-        'SMS': ProtocolCapabilities(
-            can_send=True,
-            can_receive=True,
-            supports_position=False,
-            supports_threading=False,
-            supports_attachments=False,
-            max_message_length=160  # SMS limit
-        )
     }
 
     # Create adapter

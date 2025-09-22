@@ -13,9 +13,8 @@ A universal communication bridge that seamlessly connects amateur radio (APRS) w
 ### **Supported Protocols**
 - **📡 APRS-IS**: Amateur radio packet network with position and messaging
 - **💬 Discord**: Rich embeds, threading, and webhook integration
-- **📧 Email**: SMTP notifications with HTML formatting
 - **📁 File Logging**: Structured logging with rotation
-- **🔧 Extensible**: Easy to add new protocols (Slack, Matrix, etc.)
+- **🔧 Extensible**: Easy to add new protocols
 
 ### **Intelligent Message Routing**
 - **RARSMS Prefix Filtering**: Only route APRS messages intended for the system
@@ -45,7 +44,7 @@ emergency_msg = create_emergency_message(
     "Vehicle accident, need assistance",
     35.7500, -78.7000
 )
-# Automatically adapts to APRS (67 chars), Discord (rich embed), SMS (160 chars)
+# Automatically adapts to APRS (67 chars), Discord (rich embed)
 ```
 
 ## 🚀 Quick Start
@@ -222,10 +221,6 @@ Emergency text
 🏷️ Metadata: event_type=emergency, priority=high
 ```
 
-**SMS (160 char limit):**
-```
-🚨 Emergency text. Location: 35.7796,-78.6382. Additional details
-```
 
 ## 🛠️ Docker Commands
 
@@ -354,7 +349,7 @@ class NewProtocol(BaseProtocol):
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+GPL 3.0 License - see [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 

@@ -165,8 +165,6 @@ class MessageAdapter:
                 adapted_block = self._adapt_for_aprs(adapted_block)
             elif target_protocol.startswith('discord'):
                 adapted_block = self._adapt_for_discord(adapted_block)
-            elif target_protocol.startswith('slack'):
-                adapted_block = self._adapt_for_slack(adapted_block)
 
             # Apply general adaptations
             if not capabilities.supports_attachments and block.content_type == 'media':
@@ -212,13 +210,6 @@ class MessageAdapter:
 
         return block
 
-    def _adapt_for_slack(self, block: ContentBlock) -> ContentBlock:
-        """Slack-specific adaptations"""
-        # Convert Discord markdown to Slack format
-        block.content = re.sub(r'\*\*(.*?)\*\*', r'*\1*', block.content)  # Bold
-        block.content = re.sub(r'\*(.*?)\*', r'_\1_', block.content)      # Italic
-
-        return block
 
     def _fit_to_protocol_limits(self, blocks: List[ContentBlock],
                                capabilities: ProtocolCapabilities) -> List[ContentBlock]:

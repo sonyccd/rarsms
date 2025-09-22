@@ -302,21 +302,21 @@
         <header>
             <div class="logo">RARSMS</div>
             <div class="tagline">Raleigh Amateur Radio Society Messaging Service</div>
-            <div class="status-badge">🚧 In Development</div>
+            <div class="status-badge" style="background: #68d391; color: #22543d;">🎉 Core System Ready</div>
         </header>
 
         <div class="main-content">
             <div class="section">
-                <h2>🌐 Bridging Amateur Radio Networks</h2>
-                <p>RARSMS is an innovative messaging aggregator and router that seamlessly connects multiple amateur radio communication platforms, enabling our club members to communicate across APRS, Discord, and the TARPN Network from a single, unified system.</p>
+                <h2>🌐 Universal Communication Bridge</h2>
+                <p>RARSMS is a universal communication bridge that seamlessly connects amateur radio (APRS) with modern messaging platforms like Discord. Built with intelligent protocol adaptation, it enables bidirectional message routing with smart content prioritization to ensure critical information is preserved across different platform limitations.</p>
                 
                 <div class="network-flow">
                     <div class="hub-container">
                         <div class="network-box hub">RARSMS</div>
                         <div class="network-box spoke spoke-1">APRS-IS</div>
                         <div class="network-box spoke spoke-2">Discord</div>
-                        <div class="network-box spoke spoke-3">TARPN</div>
-                        <div class="network-box spoke spoke-4">Winlink</div>
+                        <div class="network-box spoke spoke-3">Future</div>
+                        <div class="network-box spoke spoke-4">Protocols</div>
                         
                         <div class="connection-line line-1"></div>
                         <div class="connection-line line-2"></div>
@@ -330,33 +330,33 @@
                 <h2>✨ Key Features</h2>
                 <div class="features-grid">
                     <div class="feature-card">
-                        <h4>🔄 Real-time Message Routing</h4>
-                        <p>Messages sent to <span class="callsign">RARSMS</span> on APRS are instantly forwarded to Discord and other connected networks, with replies automatically routed back to the original sender.</p>
+                        <h4>🔄 Universal Message Interchange</h4>
+                        <p>Send one message to multiple protocols automatically with smart adaptation that fits each protocol's capabilities and character limits while preserving critical information.</p>
                     </div>
-                    
+
                     <div class="feature-card">
-                        <h4>🔐 Member Authentication</h4>
-                        <p>Only authorized club members can use the service. The system validates callsigns against our membership database before processing messages.</p>
+                        <h4>🔐 RARSMS Prefix Filtering</h4>
+                        <p>Only routes APRS messages intended for the system - messages addressed to <span class="callsign">RARSMS</span> or starting with "RARSMS" from authorized callsigns.</p>
                     </div>
-                    
+
                     <div class="feature-card">
-                        <h4>📊 Message History & Analytics</h4>
-                        <p>Complete web dashboard showing message history, routing statistics, and system performance metrics for full transparency.</p>
+                        <h4>🧠 Intelligent Protocol Adaptation</h4>
+                        <p>Messages automatically adapt to each protocol's limitations - APRS (67 chars) gets concise text, Discord gets rich embeds with maps and formatting.</p>
                     </div>
-                    
+
                     <div class="feature-card">
-                        <h4>🔌 Extensible Architecture</h4>
-                        <p>Designed for easy expansion - new messaging services and networks can be added without disrupting existing functionality.</p>
+                        <h4>🔌 Protocol Abstraction Layer</h4>
+                        <p>Extensible architecture with BaseProtocol interface makes adding new communication platforms simple without disrupting existing functionality.</p>
                     </div>
-                    
+
                     <div class="feature-card">
-                        <h4>💬 Thread-based Conversations</h4>
-                        <p>Discord replies create threaded conversations that maintain context while routing responses back to the original APRS station.</p>
+                        <h4>📍 Geographic Integration</h4>
+                        <p>Position packets from APRS automatically generate interactive map links in Discord with technical details and timestamps.</p>
                     </div>
-                    
+
                     <div class="feature-card">
-                        <h4>🏠 Self-hosted Solution</h4>
-                        <p>Runs entirely on local infrastructure using Docker, ensuring reliability and keeping operational costs minimal.</p>
+                        <h4>🐳 Containerized Deployment</h4>
+                        <p>Runs reliably in Docker with graceful error handling - continues operating even with partial protocol configuration.</p>
                     </div>
                 </div>
             </div>
@@ -367,46 +367,62 @@
                 
                 <div class="tech-stack">
                     <div class="tech-item">
+                        <h4>🐍 Python + AsyncIO</h4>
+                        <p>High-performance async runtime</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>📡 APRS-IS Telnet</h4>
+                        <p>Direct connection to amateur radio network</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>🤖 Discord Webhooks</h4>
+                        <p>Real-time message delivery</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>🔄 Protocol Abstraction</h4>
+                        <p>Universal message interchange</p>
+                    </div>
+                    <div class="tech-item">
                         <h4>🐳 Docker</h4>
                         <p>Containerized deployment</p>
                     </div>
                     <div class="tech-item">
-                        <h4>📡 APRS-IS</h4>
-                        <p>Direct telnet connection</p>
-                    </div>
-                    <div class="tech-item">
-                        <h4>🤖 Discord Bot</h4>
-                        <p>Real-time integration</p>
-                    </div>
-                    <div class="tech-item">
-                        <h4>🗃 PocketBase</h4>
-                        <p>Database & authentication</p>
+                        <h4>📝 YAML Configuration</h4>
+                        <p>Flexible routing rules</p>
                     </div>
                 </div>
             </div>
 
             <div class="section">
-                <h2>🚀 Development Roadmap</h2>
-                <h3>Phase 1: Core APRS Integration</h3>
+                <h2>🚀 Current Status</h2>
+                <div class="status-badge" style="background: #68d391; color: #22543d;">🎉 Core System Complete</div>
+
+                <h3>✅ Implemented Features</h3>
                 <ul style="margin-left: 20px; margin-bottom: 20px;">
-                    <li>✅ Project planning and architecture design</li>
-                    <li>🔄 APRS-IS telnet connection and message parsing</li>
-                    <li>🔄 Member database and authentication system</li>
-                    <li>⏳ Basic Discord bot integration</li>
+                    <li>✅ APRS-IS telnet connection with authentication</li>
+                    <li>✅ Discord webhook integration</li>
+                    <li>✅ Universal message interchange format</li>
+                    <li>✅ RARSMS prefix filtering</li>
+                    <li>✅ Protocol abstraction layer</li>
+                    <li>✅ Intelligent message adaptation</li>
+                    <li>✅ Callsign authorization whitelist</li>
+                    <li>✅ Docker containerization</li>
+                    <li>✅ Graceful error handling</li>
                 </ul>
-                
-                <h3>Phase 2: Enhanced Features</h3>
+
+                <h3>🔄 Active Development</h3>
                 <ul style="margin-left: 20px; margin-bottom: 20px;">
+                    <li>🔄 Bidirectional Discord bot communication</li>
+                    <li>🔄 Enhanced position packet handling</li>
+                    <li>🔄 Message threading and conversation tracking</li>
+                </ul>
+
+                <h3>📋 Future Roadmap</h3>
+                <ul style="margin-left: 20px;">
                     <li>⏳ Web dashboard for message history</li>
                     <li>⏳ System monitoring and analytics</li>
-                    <li>⏳ Threaded conversation management</li>
-                </ul>
-                
-                <h3>Phase 3: Network Expansion</h3>
-                <ul style="margin-left: 20px;">
-                    <li>⏳ TARPN Network integration</li>
-                    <li>⏳ Winlink gateway support</li>
-                    <li>⏳ Additional amateur radio services</li>
+                    <li>⏳ Additional protocol support</li>
+                    <li>⏳ Advanced routing rules</li>
                 </ul>
             </div>
 
@@ -423,9 +439,43 @@
         </div>
 
         <div class="contact-section">
-            <h2>🤝 Get Involved</h2>
-            <p>RARSMS is an open project for the Raleigh Amateur Radio Society. Club members interested in testing, contributing code, or providing feedback are encouraged to get involved!</p>
-            <p style="margin-top: 20px;"><strong>Project Status:</strong> Active development | <strong>Expected Beta:</strong> Q4 2025</p>
+            <h2>🤝 Join the Development</h2>
+            <p>RARSMS is an open-source project welcoming contributions from amateur radio operators and developers. The core system is complete and ready for testing and enhancement!</p>
+
+            <div style="margin: 30px 0; padding: 25px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                <h3 style="color: white; margin-bottom: 15px;">🚀 Get Started</h3>
+                <p style="margin-bottom: 15px;"><strong>Clone the repository:</strong></p>
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; font-family: monospace; margin-bottom: 20px;">
+                    git clone https://github.com/sonyccd/rarsms.git
+                </div>
+                <a href="https://github.com/sonyccd/rarsms"
+                   style="display: inline-block; background: #2d3748; color: white; padding: 12px 25px;
+                          text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 15px;">
+                    📂 View on GitHub
+                </a>
+                <a href="https://github.com/sonyccd/rarsms/issues"
+                   style="display: inline-block; background: #4c51bf; color: white; padding: 12px 25px;
+                          text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    🐛 Report Issues
+                </a>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 25px;">
+                <div style="text-align: left;">
+                    <h4 style="color: white; margin-bottom: 10px;">👨‍💻 Developers</h4>
+                    <p>Contribute to protocol support, message adaptation, or new features</p>
+                </div>
+                <div style="text-align: left;">
+                    <h4 style="color: white; margin-bottom: 10px;">📡 Radio Operators</h4>
+                    <p>Test the system, provide feedback, and help with APRS integration</p>
+                </div>
+                <div style="text-align: left;">
+                    <h4 style="color: white; margin-bottom: 10px;">📝 Documentation</h4>
+                    <p>Improve setup guides, add examples, or create tutorials</p>
+                </div>
+            </div>
+
+            <p style="margin-top: 25px;"><strong>License:</strong> GPL 3.0 | <strong>Language:</strong> Python | <strong>Status:</strong> Active Development</p>
         </div>
     </div>
 
