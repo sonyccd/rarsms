@@ -1,0 +1,134 @@
+# Jekyll Configuration for RARSMS Repository
+# This file configures Jekyll to properly process the repository for GitHub Pages
+
+# Basic Site Information
+title: "RARSMS - Amateur Radio Communication Bridge"
+description: "Universal communication bridge connecting APRS with Discord and other messaging platforms"
+url: "https://sonyccd.github.io/rarsms"
+baseurl: ""
+
+# GitHub Pages Configuration
+remote_theme: primer/github-pages-theme
+plugins:
+  - jekyll-github-metadata
+  - jekyll-seo-tag
+
+# Build Settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude directories and files from Jekyll processing
+exclude:
+  # Python environment and dependencies
+  - venv/
+  - env/
+  - ENV/
+  - .venv/
+  - .env/
+  - test_env/
+  - .test_env/
+  - __pycache__/
+  - "*.py[cod]"
+  - "*.so"
+  - .Python
+  - build/
+  - develop-eggs/
+  - downloads/
+  - eggs/
+  - .eggs/
+  - lib/
+  - lib64/
+  - parts/
+  - sdist/
+  - var/
+  - wheels/
+  - "*.egg-info/"
+  - .installed.cfg
+  - "*.egg"
+  - MANIFEST
+
+  # Testing and coverage
+  - .pytest_cache/
+  - .coverage
+  - htmlcov/
+  - .tox/
+  - .nox/
+  - coverage.xml
+  - "*.cover"
+  - .hypothesis/
+  - tests/
+
+  # Configuration and sensitive files
+  - config.yaml
+  - .env*
+  - "*.log"
+  - logs/
+  - cache/
+  - "*.cache"
+
+  # Development tools
+  - .vscode/
+  - .idea/
+  - "*.swp"
+  - "*.swo"
+  - .git/
+  - .gitignore
+  - .github/workflows/
+  - .github/ISSUE_TEMPLATE/
+
+  # Docker and container files
+  - docker-compose.yml
+  - docker-compose.override.yml
+  - Dockerfile
+  - .dockerignore
+
+  # Python package files
+  - requirements.txt
+  - Pipfile
+  - Pipfile.lock
+  - poetry.lock
+  - pyproject.toml
+  - setup.py
+  - setup.cfg
+
+  # Application-specific
+  - protocols/
+  - main.py
+  - run_tests.py
+  - test_status.py
+  - pytest.ini
+  - Makefile
+  - "*.py"
+
+# Include specific files that should be processed
+include:
+  - README.md
+  - LICENSE
+  - SECURITY.md
+  - TESTING.md
+  - index.html
+
+# Set default layout for pages
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+# Kramdown settings
+kramdown:
+  input: GFM
+  hard_wrap: false
+  syntax_highlighter: rouge
+
+# SEO settings
+author: "RARSMS Contributors"
+twitter:
+  username: # Add if applicable
+facebook:
+  app_id: # Add if applicable
+logo: # Add logo path if available
+
+# GitHub repository information (automatically detected)
+github: [metadata]

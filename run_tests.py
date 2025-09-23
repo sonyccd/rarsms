@@ -76,13 +76,19 @@ def show_help():
     print("  python run_tests.py discord      # Run Discord tests only")
     print("  python run_tests.py aprs         # Run APRS tests only")
     print("  python run_tests.py manager      # Run protocol manager tests only")
+    print("  python run_tests.py base         # Run base protocol tests only")
+    print("  python run_tests.py interchange  # Run interchange module tests only")
+    print("  python run_tests.py integration  # Run integration tests only")
     print("  python run_tests.py --help       # Show this help")
     print()
     print("Test Categories:")
-    print("  config    - Configuration loading and validation")
-    print("  discord   - Discord bot protocol functionality")
-    print("  aprs      - APRS protocol parsing and routing")
-    print("  manager   - Protocol manager and message routing")
+    print("  config      - Configuration loading and validation")
+    print("  discord     - Discord bot protocol functionality")
+    print("  aprs        - APRS protocol parsing and routing")
+    print("  manager     - Protocol manager and message routing")
+    print("  base        - Base protocol and message classes")
+    print("  interchange - Universal message system and adaptation")
+    print("  integration - End-to-end integration tests")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -99,6 +105,12 @@ if __name__ == "__main__":
             sys.exit(run_specific_test('aprs'))
         elif arg in ['manager', 'protocol_manager']:
             sys.exit(run_specific_test('manager'))
+        elif arg in ['base', 'base_protocol']:
+            sys.exit(run_specific_test('base'))
+        elif arg in ['interchange', 'universal']:
+            sys.exit(run_specific_test('interchange'))
+        elif arg in ['integration', 'e2e']:
+            sys.exit(run_specific_test('integration'))
         else:
             print(f"Unknown test category: {arg}")
             print("Run 'python run_tests.py --help' for available options")

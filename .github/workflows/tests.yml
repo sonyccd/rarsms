@@ -1,0 +1,178 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10.0, 3.11, 3.12]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create test configuration files
+      run: |
+        # Create minimal config for tests (using example as template)
+        cp config.example.yaml config.yaml
+
+        # Create test callsigns file
+        echo "# Test callsigns for CI" > callsigns.txt
+        echo "TEST-1" >> callsigns.txt
+        echo "W4ABC" >> callsigns.txt
+        echo "KJ4XYZ" >> callsigns.txt
+
+    - name: Lint code with flake8 (if available)
+      run: |
+        pip install flake8 || echo "flake8 not available, skipping linting"
+        if command -v flake8 &> /dev/null; then
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings. GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        fi
+
+    - name: Run unit tests with pytest
+      run: |
+        python -m pytest tests/ -v --tb=short --strict-markers --disable-warnings --asyncio-mode=auto
+
+    - name: Run tests with coverage (Python 3.11 only)
+      if: matrix.python-version == '3.11'
+      run: |
+        pip install coverage pytest-cov
+        python -m pytest tests/ --cov=protocols --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing
+
+    - name: Upload coverage reports to Codecov (Python 3.11 only)
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false  # Don't fail CI if codecov upload fails
+
+    - name: Test Docker build
+      if: matrix.python-version == '3.11'  # Only test Docker on one Python version
+      run: |
+        docker build -t rarsms-test .
+
+    - name: Archive test artifacts
+      if: failure()  # Only run if tests failed
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-artifacts-py${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          pytest.log
+          *.log
+        retention-days: 7
+
+  # Integration tests that require services (optional, can be enabled later)
+  integration:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run on main branch pushes
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create test configuration
+      run: |
+        cp config.example.yaml config.yaml
+        echo "TEST-1" > callsigns.txt
+
+    - name: Run integration tests
+      run: |
+        python -m pytest tests/test_integration.py -v --tb=short -m "not slow"
+
+  # Security scan
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run security scan with bandit
+      run: |
+        pip install bandit[toml]
+        bandit -r . -f json -o bandit-report.json || true
+
+    - name: Upload security scan results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-scan-results
+        path: bandit-report.json
+        retention-days: 30
+
+  # Code quality checks
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install code quality tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort mypy
+        pip install -r requirements.txt  # For mypy to understand imports
+
+    - name: Check code formatting with black
+      run: |
+        black --check --diff .
+      continue-on-error: true  # Don't fail CI for formatting issues
+
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff .
+      continue-on-error: true
+
+    - name: Type checking with mypy
+      run: |
+        mypy . --ignore-missing-imports --no-strict-optional
+      continue-on-error: true  # Don't fail CI for type issues

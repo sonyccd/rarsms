@@ -1,0 +1,75 @@
+name: Update Badges
+
+on:
+  push:
+    branches: [ main ]
+  workflow_run:
+    workflows: ["CI", "Coverage"]
+    types:
+      - completed
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Update CI Badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GITHUB_TOKEN }}
+        gistID: # Add your gist ID here if you want to use gist-based badges
+        filename: ci-badge.json
+        label: Tests
+        message: ${{ github.event.workflow_run.conclusion == 'success' && 'passing' || 'failing' }}
+        color: ${{ github.event.workflow_run.conclusion == 'success' && 'brightgreen' || 'red' }}
+      continue-on-error: true
+
+    - name: Create badges directory
+      run: |
+        mkdir -p .github/badges
+        echo "# Badges Directory" > .github/badges/README.md
+        echo "This directory contains generated badge files for the repository." >> .github/badges/README.md
+
+    - name: Generate test summary badge
+      run: |
+        # Count test files
+        TEST_FILES=$(find tests/ -name "test_*.py" | wc -l)
+        echo "Found $TEST_FILES test files"
+
+        # Create JSON for shields.io endpoint badge
+        cat > .github/badges/tests.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "tests",
+          "message": "${TEST_FILES} files",
+          "color": "blue"
+        }
+        EOF
+
+    - name: Generate coverage badge placeholder
+      run: |
+        # Placeholder for coverage badge (will be updated by coverage workflow)
+        cat > .github/badges/coverage.json << EOF
+        {
+          "schemaVersion": 1,
+          "label": "coverage",
+          "message": "unknown",
+          "color": "lightgrey"
+        }
+        EOF
+
+    - name: Commit badge files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .github/badges/
+        git diff --staged --quiet || git commit -m "Update test badges [skip ci]"
+        git push
+      continue-on-error: true

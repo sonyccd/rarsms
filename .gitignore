@@ -72,6 +72,8 @@ env/
 ENV/
 .venv/
 .env/
+test_env/
+.test_env/
 
 # Python distribution/packaging
 .Python
