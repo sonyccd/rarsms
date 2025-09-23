@@ -52,6 +52,10 @@ cache/
 *.sqlite
 *.sqlite3
 
+# PocketBase data (contains database files)
+pocketbase/pb_data/*
+!pocketbase/pb_data/.gitkeep
+
 # Legacy PocketBase data (from original design)
 data/
 pb_data/

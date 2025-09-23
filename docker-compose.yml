@@ -1,10 +1,7 @@
-version: '3.8'
-
 services:
   rarsms:
     build: .
     container_name: rarsms-bridge
-    # Configuration is loaded from config.yaml instead of environment variables
     volumes:
       - ./callsigns.txt:/app/callsigns.txt:ro
       - ./config.yaml:/app/config.yaml:ro
@@ -14,3 +11,20 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    depends_on:
+      - pocketbase
+
+  pocketbase:
+    build: ./pocketbase
+    container_name: rarsms-pocketbase
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pocketbase/pb_data:/pb/pb_data
+      - ./pocketbase/pb_public:/pb/pb_public
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8090/api/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
