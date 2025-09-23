@@ -18,8 +18,9 @@ A universal communication bridge that seamlessly connects amateur radio (APRS) w
 
 ### **Intelligent Message Routing**
 - **RARSMS Prefix Filtering**: Only route APRS messages intended for the system
+- **Message Deduplication**: Intelligent filtering prevents duplicate APRS retransmissions
 - **Geographic Filtering**: Location-based APRS packet filtering
-- **Callsign Authorization**: Whitelist-based access control
+- **Callsign Authorization**: Whitelist-based access control with proper SSID handling
 - **Configurable Rules**: Custom routing between any protocols
 
 ### **Real-World Examples**
@@ -72,6 +73,9 @@ discord_guild_id: "your_guild_id"  # optional
 message_prefix: "RARSMS"
 require_prefix: true
 block_position_updates: true
+
+# Deduplication settings
+deduplication_timeout: 300  # seconds (5 minutes default)
 ```
 
 **⚠️ Important**: Never commit `config.yaml` to version control! It contains sensitive credentials.
@@ -123,6 +127,12 @@ N4DEF>APRS,TCPIP*::DISCORD :RARSMS: Emergency at grid FM15
 W4ABC>APRS,TCPIP*::CQ      :Regular APRS chat
 KJ4XYZ>APRS,TCPIP*::W4XYZ  :Direct message without prefix
 ```
+
+#### **🚫 DUPLICATE FILTERING:**
+RARSMS intelligently prevents duplicate messages from APRS retransmissions:
+- Tracks unique message content for configurable time window (default: 5 minutes)
+- Removes APRS message numbers and technical metadata for accurate comparison
+- Logs when duplicates are blocked: `🚫 Blocked duplicate message from KK4PWJ-10`
 
 #### **📍 ALWAYS ROUTED:**
 - Position packets from authorized callsigns (regardless of content)
@@ -178,6 +188,7 @@ Copy `config.example.yaml` to `config.yaml` and configure the following:
 - `message_prefix`: Custom prefix (default: "RARSMS")
 - `require_prefix`: Enable/disable prefix requirement (default: true)
 - `block_position_updates`: Block noisy position updates (default: true)
+- `deduplication_timeout`: Seconds to remember messages for duplicate filtering (default: 300)
 
 #### **Geographic Filtering:**
 - `filter_lat`: Latitude for APRS packet filtering
@@ -187,6 +198,20 @@ Copy `config.example.yaml` to `config.yaml` and configure the following:
 ### **Environment Variable Override**
 
 You can also use environment variables to override config.yaml values (useful for Docker):
+
+```bash
+# Core settings
+APRS_CALLSIGN="KK4PWJ-0"
+APRS_PASSCODE="12345"
+DISCORD_BOT_TOKEN="your_bot_token"
+DISCORD_CHANNEL_ID="your_channel_id"
+
+# Message filtering
+MESSAGE_PREFIX="RARSMS"
+REQUIRE_PREFIX="true"
+BLOCK_POSITION_UPDATES="true"
+DEDUPLICATION_TIMEOUT="300"
+```
 ```yaml
 protocols:
   aprs_emergency:
@@ -275,6 +300,25 @@ Just replying normally (not using reply function)
 - **Callsign Validation**: Ensures replies go to correct station
 - **Visual Feedback**: 📡 for success, ❌ for errors
 - **Rich Formatting**: APRS messages shown with maps and metadata
+- **QRZ.com Integration**: Clickable callsigns link to operator profiles
+- **Clean Message Display**: Technical metadata automatically filtered out
+
+### **Discord Message Format**
+
+APRS messages appear in Discord with a clean, 3-line format designed for maximum readability:
+
+```
+📻 [**KK4PWJ-10**](https://www.qrz.com/db/KK4PWJ) *14:34 UTC*
+Testing the new bridge system
+Reply: `APRS KK4PWJ-10 your message here`
+```
+
+**Features:**
+- **📻 Visual indicator**: Radio emoji draws attention to new APRS activity
+- **🔗 Clickable callsigns**: Direct links to QRZ.com profiles (link previews suppressed)
+- **⏰ Timestamp first**: Logical flow - when → who → what → how to reply
+- **🧹 Clean content**: Technical debug information automatically removed
+- **💬 Simple reply format**: Clear instructions for responding back to APRS
 
 ### **Universal Message Adaptation**
 
@@ -358,17 +402,25 @@ docker-compose restart rarsms
 | APRS login failed | Wrong callsign/passcode | Verify credentials and passcode calculation |
 | Discord not working | Invalid webhook URL | Check webhook URL format and permissions |
 | Messages filtered | Callsign not authorized | Add callsign to `callsigns.txt` |
+| Duplicate messages | APRS retransmissions | Adjust `deduplication_timeout` in config |
+| SSID missing in APRS | Callsign formatting | Ensure `aprs_callsign` includes SSID (e.g., `KK4PWJ-0`) |
 
 ### **Debug Commands**
 ```bash
 # Check message filtering
 docker-compose logs -f | grep "Blocking message"
 
+# Monitor duplicate filtering
+docker-compose logs -f | grep "Blocked duplicate message"
+
 # Monitor protocol connections
 docker-compose logs -f | grep "protocol.*connected"
 
 # View routing statistics
 docker-compose logs -f | grep "Statistics"
+
+# Check APRS packet formatting
+docker-compose logs -f | grep "Sending APRS packet"
 ```
 
 ## 🏗️ Architecture

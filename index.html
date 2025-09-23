@@ -358,6 +358,16 @@
                         <h4>🐳 Containerized Deployment</h4>
                         <p>Runs reliably in Docker with graceful error handling - continues operating even with partial protocol configuration.</p>
                     </div>
+
+                    <div class="feature-card">
+                        <h4>🚫 Message Deduplication</h4>
+                        <p>Intelligent duplicate filtering prevents the same APRS message from appearing multiple times due to network retransmissions. Configurable timeout window.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🔗 QRZ.com Integration</h4>
+                        <p>Callsigns in Discord are clickable links to QRZ.com profiles, making it easy to look up operator information with suppressed link previews for clean display.</p>
+                    </div>
                 </div>
             </div>
 
@@ -391,6 +401,17 @@
                         <p>Flexible routing rules</p>
                     </div>
                 </div>
+
+                <h3 style="margin-top: 30px;">🔧 Configuration Highlights</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                    <h4 style="color: #4a5568; margin-bottom: 10px;">Message Deduplication</h4>
+                    <div style="background: #2d3748; color: #68d391; padding: 15px; border-radius: 5px; font-family: monospace; margin-bottom: 15px;">
+# Prevent duplicate messages from APRS retransmissions<br/>
+deduplication_timeout: 300  # seconds (5 minutes default)<br/>
+# Recommended: 120-600 seconds depending on network conditions
+                    </div>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">Configurable via <code>config.yaml</code> or <code>DEDUPLICATION_TIMEOUT</code> environment variable</p>
+                </div>
             </div>
 
             <div class="section">
@@ -399,13 +420,15 @@
 
                 <h3>✅ Implemented Features</h3>
                 <ul style="margin-left: 20px; margin-bottom: 20px;">
-                    <li>✅ APRS-IS telnet connection with authentication</li>
-                    <li>✅ Bidirectional Discord bot communication</li>
+                    <li>✅ APRS-IS telnet connection with proper SSID handling</li>
+                    <li>✅ Bidirectional Discord bot communication with QRZ.com integration</li>
                     <li>✅ Universal message interchange format</li>
                     <li>✅ RARSMS prefix filtering</li>
+                    <li>✅ Intelligent message deduplication (configurable timeout)</li>
                     <li>✅ Protocol abstraction layer</li>
                     <li>✅ Intelligent message adaptation</li>
                     <li>✅ Callsign authorization whitelist</li>
+                    <li>✅ Clean Discord message formatting with clickable callsigns</li>
                     <li>✅ Docker containerization</li>
                     <li>✅ Graceful error handling</li>
                     <li>✅ APRS message format compliance</li>
@@ -437,6 +460,44 @@
                     <li><strong>Replies are routed back</strong> to your APRS station automatically</li>
                     <li><strong>View the conversation</strong> in the web dashboard for complete message history</li>
                 </ol>
+            </div>
+
+            <div class="section">
+                <h2>💬 Discord Message Format</h2>
+                <p>Messages appear in Discord with a clean, readable format designed for maximum clarity:</p>
+
+                <div style="background: #2c2f33; color: #dcddde; padding: 20px; border-radius: 8px; font-family: 'Discord', sans-serif; margin: 20px 0; border-left: 4px solid #667eea;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="color: #99aab5; font-style: italic;">*14:34 UTC*</span>
+                        📻
+                        <span style="color: #00b0f4; text-decoration: underline; font-weight: bold;">**KK4PWJ-10**</span>
+                    </div>
+                    <div style="margin-bottom: 8px; font-size: 16px;">
+                        Testing the new bridge system
+                    </div>
+                    <div style="color: #99aab5; font-size: 14px;">
+                        Reply: <span style="background: #40444b; padding: 2px 4px; border-radius: 3px; font-family: monospace;">APRS KK4PWJ-10 your message here</span>
+                    </div>
+                </div>
+
+                <div class="features-grid" style="margin-top: 20px;">
+                    <div class="feature-card">
+                        <h4>📻 Visual Indicator</h4>
+                        <p>Radio emoji draws attention to new APRS activity in the channel.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔗 Clickable Callsigns</h4>
+                        <p>Callsigns link directly to QRZ.com profiles for instant operator lookup.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🧹 Clean Content</h4>
+                        <p>Technical metadata and debug information automatically filtered out.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⏰ Timestamp First</h4>
+                        <p>Logical flow: when → who → what → how to reply for easy scanning.</p>
+                    </div>
+                </div>
             </div>
         </div>
 

@@ -123,7 +123,7 @@ class TestDiscordBotProtocol:
 
     @pytest.mark.asyncio
     async def test_format_message_for_discord_text(self, discord_protocol):
-        """Test formatting text message for Discord"""
+        """Test formatting text message for Discord with new format"""
         message = Message(
             source_protocol='aprs_main',
             source_id='W4ABC',
@@ -133,13 +133,17 @@ class TestDiscordBotProtocol:
 
         formatted = discord_protocol._format_message_for_discord(message)
 
-        assert '💬 **W4ABC** (aprs_main)' in formatted
+        # Check for new format: emoji, QRZ link, timestamp, content, reply instructions
+        assert '📻 [**W4ABC**](<https://www.qrz.com/db/W4ABC>)' in formatted
         assert 'Hello from the field!' in formatted
-        assert 'Reply with: `APRS W4ABC <your message>`' in formatted
+        assert 'Reply: `APRS W4ABC your message here`' in formatted
+        assert 'UTC' in formatted  # Timestamp should be present
+        # Should be 3 lines: header, content, reply
+        assert len(formatted.split('\n')) == 3
 
     @pytest.mark.asyncio
     async def test_format_message_for_discord_position(self, discord_protocol):
-        """Test formatting position message for Discord"""
+        """Test formatting position message for Discord with new format"""
         message = Message(
             source_protocol='aprs_main',
             source_id='W4ABC-9',
@@ -155,12 +159,16 @@ class TestDiscordBotProtocol:
 
         formatted = discord_protocol._format_message_for_discord(message)
 
-        assert '📍 **W4ABC-9** (aprs_main)' in formatted
-        assert 'Mobile station' in formatted
+        # Check for new format: emoji, QRZ link, timestamp
+        assert '📍 [**W4ABC-9**](<https://www.qrz.com/db/W4ABC>)' in formatted
+        assert 'sent position update' in formatted
+        assert 'UTC' in formatted  # Timestamp should be present
+        # Position messages should have map link
+        assert '[View on Map](<https://maps.google.com/?q=35.7796,-78.6382>)' in formatted
 
     @pytest.mark.asyncio
     async def test_format_message_for_discord_emergency(self, discord_protocol):
-        """Test formatting emergency message for Discord"""
+        """Test formatting emergency message for Discord with new format"""
         message = Message(
             source_protocol='aprs_main',
             source_id='W4ABC',
@@ -170,8 +178,12 @@ class TestDiscordBotProtocol:
 
         formatted = discord_protocol._format_message_for_discord(message)
 
-        assert '🚨 **W4ABC** (aprs_main)' in formatted
+        # Check for new format: emoji, QRZ link, timestamp, content, reply
+        assert '🚨 [**W4ABC**](<https://www.qrz.com/db/W4ABC>)' in formatted
         assert 'Emergency at I-40 mile marker 123' in formatted
+        assert 'UTC' in formatted  # Timestamp should be present
+        assert 'Reply: `APRS W4ABC your message here`' in formatted
+        assert len(formatted.split('\n')) == 3
 
     def test_message_tracking_add_and_cleanup(self, discord_protocol):
         """Test APRS message tracking for replies"""
@@ -397,6 +409,192 @@ class TestDiscordBotProtocol:
 
         formatted = discord_protocol._format_message_for_discord(message)
 
-        # Should include position info if get_position() returns data
-        assert '📍 **W4ABC-9** (aprs_main)' in formatted
-        assert 'Mobile station' in formatted
+        # Should include position info with new format
+        assert '📍 [**W4ABC-9**](<https://www.qrz.com/db/W4ABC>)' in formatted
+        assert 'sent position update' in formatted
+
+    def test_qrz_link_generation(self, discord_protocol):
+        """Test QRZ.com link generation for various callsign formats"""
+        test_cases = [
+            ('W4ABC', 'W4ABC', '[**W4ABC**](<https://www.qrz.com/db/W4ABC>)'),
+            ('KK4PWJ-10', 'KK4PWJ', '[**KK4PWJ-10**](<https://www.qrz.com/db/KK4PWJ>)'),
+            ('N4DEF-1', 'N4DEF', '[**N4DEF-1**](<https://www.qrz.com/db/N4DEF>)'),
+            ('AA1AAA/M', 'AA1AAA', '[**AA1AAA/M**](<https://www.qrz.com/db/AA1AAA>)'),
+        ]
+
+        for full_callsign, base_callsign, expected_link in test_cases:
+            message = Message(
+                source_protocol='aprs_main',
+                source_id=full_callsign,
+                message_type=MessageType.TEXT,
+                content='Test message'
+            )
+
+            formatted = discord_protocol._format_message_for_discord(message)
+            assert expected_link in formatted
+
+    def test_content_cleanup_removes_debug_info(self, discord_protocol):
+        """Test that technical debug information is removed from message content"""
+        test_cases = [
+            # RARSMS prefix removal
+            ('RARSMS Hello world', 'Hello world'),
+            ('RARSMS: Hello world', 'Hello world'),
+            ('rarsms:test message', 'test message'),
+
+            # Debug info removal
+            ('Test message From: aprs_main:KK4PWJ-10 addressee: foo', 'Test message'),
+            ('Hello addressee: DISCORD original_message: foo', 'Hello'),
+            ('Message content msg_no: 123', 'Message content'),
+
+            # APRS message number removal
+            ('Test message {123', 'Test message'),
+            ('Hello world {001', 'Hello world'),
+
+            # Multiple cleanup scenarios
+            ('RARSMS Test {456 From: aprs_main addressee: test', 'Test'),
+        ]
+
+        for dirty_content, expected_clean in test_cases:
+            message = Message(
+                source_protocol='aprs_main',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content=dirty_content
+            )
+
+            formatted = discord_protocol._format_message_for_discord(message)
+            assert expected_clean in formatted
+            # Ensure debug info is not present
+            assert 'From:' not in formatted
+            assert 'addressee:' not in formatted
+            assert 'msg_no:' not in formatted
+            assert 'original_message:' not in formatted
+
+    def test_link_preview_suppression(self, discord_protocol):
+        """Test that link previews are suppressed using <> formatting"""
+        message = Message(
+            source_protocol='aprs_main',
+            source_id='W4ABC',
+            message_type=MessageType.TEXT,
+            content='Test message'
+        )
+
+        formatted = discord_protocol._format_message_for_discord(message)
+
+        # QRZ link should be wrapped in <> to suppress preview
+        assert '(<https://www.qrz.com/db/W4ABC>)' in formatted
+        # Should not have unwrapped URL that would show preview
+        assert '[**W4ABC**](https://www.qrz.com/db/W4ABC)' not in formatted
+
+    def test_three_line_message_format(self, discord_protocol):
+        """Test that text messages follow the 3-line format"""
+        message = Message(
+            source_protocol='aprs_main',
+            source_id='KK4PWJ-10',
+            message_type=MessageType.TEXT,
+            content='Testing the bridge system'
+        )
+
+        formatted = discord_protocol._format_message_for_discord(message)
+        lines = formatted.split('\n')
+
+        # Should have exactly 3 lines
+        assert len(lines) == 3
+
+        # Line 1: emoji + callsign link + timestamp
+        assert '📻' in lines[0]
+        assert '[**KK4PWJ-10**](<https://www.qrz.com/db/KK4PWJ>)' in lines[0]
+        assert 'UTC' in lines[0]
+
+        # Line 2: clean content
+        assert lines[1] == 'Testing the bridge system'
+
+        # Line 3: reply instructions
+        assert lines[2] == 'Reply: `APRS KK4PWJ-10 your message here`'
+
+    def test_position_message_format_single_line(self, discord_protocol):
+        """Test that position messages use single line format"""
+        message = Message(
+            source_protocol='aprs_main',
+            source_id='W4ABC-9',
+            message_type=MessageType.POSITION,
+            content='Mobile station'
+        )
+
+        # Add position data
+        message.metadata = {
+            'latitude': 35.7796,
+            'longitude': -78.6382
+        }
+
+        formatted = discord_protocol._format_message_for_discord(message)
+
+        # Position messages should be single line
+        assert '\n' not in formatted
+
+        # Should contain all elements
+        assert '📍' in formatted
+        assert '[**W4ABC-9**](<https://www.qrz.com/db/W4ABC>)' in formatted
+        assert 'UTC' in formatted
+        assert 'sent position update' in formatted
+        assert '[View on Map](<https://maps.google.com/?q=35.7796,-78.6382>)' in formatted
+
+    def test_emoji_assignment_by_message_type(self, discord_protocol):
+        """Test correct emoji assignment for different message types"""
+        emoji_tests = [
+            (MessageType.TEXT, '📻'),
+            (MessageType.POSITION, '📍'),
+            (MessageType.EMERGENCY, '🚨'),
+            (MessageType.STATUS, 'ℹ️'),
+        ]
+
+        for message_type, expected_emoji in emoji_tests:
+            message = Message(
+                source_protocol='aprs_main',
+                source_id='W4ABC',
+                message_type=message_type,
+                content='Test content'
+            )
+
+            formatted = discord_protocol._format_message_for_discord(message)
+            assert expected_emoji in formatted
+
+    def test_reply_instructions_only_for_aprs_messages(self, discord_protocol):
+        """Test reply instructions only appear for APRS source messages"""
+        # APRS message should have reply instructions
+        aprs_message = Message(
+            source_protocol='aprs_main',
+            source_id='W4ABC',
+            message_type=MessageType.TEXT,
+            content='Hello from APRS'
+        )
+
+        aprs_formatted = discord_protocol._format_message_for_discord(aprs_message)
+        assert 'Reply: `APRS W4ABC your message here`' in aprs_formatted
+
+        # Non-APRS message should not have reply instructions
+        other_message = Message(
+            source_protocol='other_protocol',
+            source_id='SomeUser',
+            message_type=MessageType.TEXT,
+            content='Hello from other protocol'
+        )
+
+        other_formatted = discord_protocol._format_message_for_discord(other_message)
+        assert 'Reply:' not in other_formatted
+
+    def test_timestamp_formatting(self, discord_protocol):
+        """Test timestamp formatting in Discord messages"""
+        message = Message(
+            source_protocol='aprs_main',
+            source_id='W4ABC',
+            message_type=MessageType.TEXT,
+            content='Test message'
+        )
+
+        formatted = discord_protocol._format_message_for_discord(message)
+
+        # Should have timestamp in italics and UTC format
+        import re
+        timestamp_pattern = r'\*\d{2}:\d{2} UTC\*'
+        assert re.search(timestamp_pattern, formatted) is not None

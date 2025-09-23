@@ -462,3 +462,164 @@ class TestAPRSProtocol:
         with patch('time.time', return_value=1234567456):
             packet2 = aprs_protocol._format_message_packet(message, 'W4ABC')
             assert packet2.endswith('{456')
+
+    def test_deduplication_configuration(self):
+        """Test deduplication timeout configuration"""
+        # Test default timeout
+        config = {
+            'aprs_callsign': 'W4TEST',
+            'aprs_passcode': '12345'
+        }
+        protocol = APRSProtocol('test', config)
+        assert protocol.cache_timeout == 300  # Default 5 minutes
+
+        # Test custom timeout
+        config['deduplication_timeout'] = 120
+        protocol = APRSProtocol('test', config)
+        assert protocol.cache_timeout == 120
+
+    def test_deduplication_prevents_duplicates(self, aprs_protocol):
+        """Test that duplicate messages are prevented"""
+        with patch('time.time', return_value=1000):
+            # Create a message
+            message = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='Test message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :Test message{123'}
+            )
+
+            # First message should not be duplicate
+            assert aprs_protocol._is_duplicate_message(message) is False
+
+            # Same message should be duplicate
+            assert aprs_protocol._is_duplicate_message(message) is True
+
+    def test_deduplication_different_content_not_duplicate(self, aprs_protocol):
+        """Test that different content is not considered duplicate"""
+        with patch('time.time', return_value=1000):
+            message1 = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='First message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :First message{123'}
+            )
+
+            message2 = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='Second message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :Second message{124'}
+            )
+
+            # Both messages should be allowed
+            assert aprs_protocol._is_duplicate_message(message1) is False
+            assert aprs_protocol._is_duplicate_message(message2) is False
+
+    def test_deduplication_expires_after_timeout(self, aprs_protocol):
+        """Test that duplicates are allowed after timeout expires"""
+        message = Message(
+            source_protocol='aprs_test',
+            source_id='W4ABC',
+            message_type=MessageType.TEXT,
+            content='Test message',
+            metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :Test message{123'}
+        )
+
+        # First message at time 1000
+        with patch('time.time', return_value=1000):
+            assert aprs_protocol._is_duplicate_message(message) is False
+
+        # Same message within timeout (1000 + 300 = 1300)
+        with patch('time.time', return_value=1200):
+            assert aprs_protocol._is_duplicate_message(message) is True
+
+        # Same message after timeout expires (1000 + 300 + 1 = 1301)
+        with patch('time.time', return_value=1301):
+            assert aprs_protocol._is_duplicate_message(message) is False
+
+    def test_deduplication_strips_message_numbers(self, aprs_protocol):
+        """Test that APRS message numbers are stripped for deduplication"""
+        with patch('time.time', return_value=1000):
+            message1 = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='Test message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :Test message{123'}
+            )
+
+            message2 = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='Test message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :Test message{456'}
+            )
+
+            # First message
+            assert aprs_protocol._is_duplicate_message(message1) is False
+
+            # Second message with different message number should be duplicate
+            assert aprs_protocol._is_duplicate_message(message2) is True
+
+    def test_deduplication_cache_cleanup(self, aprs_protocol):
+        """Test that expired cache entries are cleaned up"""
+        messages = []
+
+        # Add messages at different times
+        for i in range(5):
+            with patch('time.time', return_value=1000 + i * 100):
+                message = Message(
+                    source_protocol='aprs_test',
+                    source_id='W4ABC',
+                    message_type=MessageType.TEXT,
+                    content=f'Message {i}',
+                    metadata={'raw_packet': f'W4ABC>APRS,TCPIP*::CQ      :Message {i}{{12{i}'}
+                )
+                aprs_protocol._is_duplicate_message(message)
+                messages.append(message)
+
+        # Check that cache has entries
+        assert len(aprs_protocol.message_cache) == 5
+
+        # Fast forward past timeout for first few messages
+        with patch('time.time', return_value=1000 + 400 + 301):  # Past timeout for first few
+            new_message = Message(
+                source_protocol='aprs_test',
+                source_id='W4ABC',
+                message_type=MessageType.TEXT,
+                content='New message',
+                metadata={'raw_packet': 'W4ABC>APRS,TCPIP*::CQ      :New message{999'}
+            )
+            aprs_protocol._is_duplicate_message(new_message)
+
+        # Cache should have been cleaned up
+        assert len(aprs_protocol.message_cache) < 5
+
+    def test_callsign_uppercase_conversion(self):
+        """Test that APRS callsign is converted to uppercase"""
+        config = {
+            'aprs_callsign': 'kk4pwj-0',  # lowercase with SSID
+            'aprs_passcode': '12345'
+        }
+        protocol = APRSProtocol('test', config)
+        assert protocol.callsign == 'KK4PWJ-0'  # Should be uppercase
+
+    def test_callsign_ssid_preservation(self):
+        """Test that SSID is preserved in callsign processing"""
+        config = {
+            'aprs_callsign': 'KK4PWJ-10',
+            'aprs_passcode': '12345'
+        }
+        protocol = APRSProtocol('test', config)
+        assert protocol.callsign == 'KK4PWJ-10'
+
+        # Test authorization with SSID
+        protocol.authorized_callsigns = {'KK4PWJ'}
+        assert protocol._is_authorized('KK4PWJ-10') is True
+        assert protocol._is_authorized('KK4PWJ-0') is True
+        assert protocol._is_authorized('KK4PWJ') is True
