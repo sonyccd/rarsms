@@ -20,6 +20,8 @@ class APRSProtocol(BaseProtocol):
         self.server = config.get('aprs_server', 'rotate.aprs2.net')
         self.port = config.get('aprs_port', 14580)
         self.callsign = config.get('aprs_callsign')
+        if self.callsign:
+            self.callsign = self.callsign.upper()  # APRS callsigns should be uppercase
         self.passcode = config.get('aprs_passcode')
 
         # Geographic filtering
@@ -38,6 +40,10 @@ class APRSProtocol(BaseProtocol):
         self.socket: Optional[socket.socket] = None
         self.reader_task: Optional[asyncio.Task] = None
         self.buffer = ""
+
+        # Message deduplication
+        self.message_cache = {}  # Cache recent messages to prevent duplicates
+        self.cache_timeout = 120  # 2 minutes cache timeout (reduced for better testing)
 
     def get_capabilities(self) -> ProtocolCapabilities:
         """APRS capabilities"""
@@ -268,6 +274,11 @@ class APRSProtocol(BaseProtocol):
         try:
             message = self.parse_incoming_message(raw_packet)
             if message and self._is_authorized(message.source_id) and self._should_route_message(message):
+                # Check for duplicate messages
+                if self._is_duplicate_message(message):
+                    logger.debug(f"Skipping duplicate message from {message.source_id}: {message.content[:50]}...")
+                    return
+
                 logger.info(f"Received APRS message from {message.source_id} ({message.message_type.value})")
                 self.on_message_received(message)
 
@@ -503,3 +514,62 @@ class APRSProtocol(BaseProtocol):
 
         # Default behavior - route if prefix not required
         return not self.require_prefix
+
+    def _is_duplicate_message(self, message: Message) -> bool:
+        """Check if this message is a duplicate of a recently processed message"""
+        import time
+        import hashlib
+        current_time = time.time()
+
+        # For APRS messages, use raw packet for more accurate deduplication
+        # if available, otherwise fall back to content-based deduplication
+        raw_packet = message.metadata.get('raw_packet', '')
+
+        if raw_packet:
+            # Use source callsign + message content from raw packet
+            # This avoids issues with different packet routing paths
+            if ':' in raw_packet and ('>' in raw_packet):
+                try:
+                    header_part = raw_packet.split(':', 1)[0]
+                    data_part = raw_packet.split(':', 1)[1]
+                    source_call = header_part.split('>')[0]
+
+                    # For message packets, extract the actual message content
+                    if data_part.startswith(':') and ':' in data_part[1:]:
+                        # Message format: :ADDRESSEE :MESSAGE
+                        msg_parts = data_part[1:].split(':', 1)
+                        if len(msg_parts) == 2:
+                            content_for_dedup = msg_parts[1]
+                            # Remove message number if present
+                            if '{' in content_for_dedup:
+                                content_for_dedup = content_for_dedup.split('{')[0]
+                        else:
+                            content_for_dedup = data_part
+                    else:
+                        content_for_dedup = data_part
+
+                    message_key = f"{source_call}:{message.message_type.value}:{content_for_dedup}"
+                except:
+                    # Fallback to simple content-based key
+                    message_key = f"{message.source_id}:{message.message_type.value}:{message.content}"
+            else:
+                message_key = f"{message.source_id}:{message.message_type.value}:{message.content}"
+        else:
+            # Fallback for messages without raw packet
+            message_key = f"{message.source_id}:{message.message_type.value}:{message.content}"
+
+        # Clean up expired entries from cache
+        expired_keys = [k for k, timestamp in self.message_cache.items()
+                       if current_time - timestamp > self.cache_timeout]
+        for key in expired_keys:
+            del self.message_cache[key]
+
+        # Check if this message was recently processed
+        if message_key in self.message_cache:
+            logger.info(f"🚫 Blocked duplicate message from {message.source_id}: {message.content[:30]}...")
+            return True
+
+        # Add this message to the cache
+        self.message_cache[message_key] = current_time
+        logger.debug(f"✅ New message cached: {message_key[:50]}...")
+        return False
