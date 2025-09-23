@@ -29,6 +29,11 @@ message_prefix: "RARSMS"                # Prefix required for routing messages (
 require_prefix: true                    # Whether messages must have the prefix to be routed
 block_position_updates: true           # Block noisy position updates from being forwarded
 
+# Deduplication timeout (seconds) - how long to remember messages to prevent duplicates
+# Default: 300 (5 minutes)
+# Recommended: 120-600 seconds depending on your APRS network conditions
+deduplication_timeout: 300
+
 # ====================================================================
 # Advanced Configuration (optional)
 # ====================================================================

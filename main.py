@@ -86,6 +86,7 @@ class RARSMSBridge:
             'message_prefix': os.getenv('MESSAGE_PREFIX'),
             'require_prefix': os.getenv('REQUIRE_PREFIX'),
             'block_position_updates': os.getenv('BLOCK_POSITION_UPDATES'),
+            'deduplication_timeout': os.getenv('DEDUPLICATION_TIMEOUT'),
         }
 
         # Only override config values if environment variable is actually set
@@ -93,7 +94,7 @@ class RARSMSBridge:
             if env_value is not None:
                 if key in ['require_prefix', 'block_position_updates']:
                     config[key] = env_value.lower() == 'true'
-                elif key == 'aprs_port':
+                elif key in ['aprs_port', 'deduplication_timeout']:
                     config[key] = int(env_value)
                 else:
                     config[key] = env_value
@@ -109,6 +110,7 @@ class RARSMSBridge:
             'message_prefix': 'RARSMS',
             'require_prefix': True,
             'block_position_updates': True,
+            'deduplication_timeout': 300,  # 5 minutes default
         }
 
         for key, default_value in defaults.items():
@@ -172,7 +174,8 @@ class RARSMSBridge:
                     'filter_distance': self.config['filter_distance'],
                     'authorized_callsigns': self.config['authorized_callsigns'],
                     'message_prefix': self.config.get('message_prefix', 'RARSMS'),
-                    'require_prefix': self.config.get('require_prefix', True)
+                    'require_prefix': self.config.get('require_prefix', True),
+                    'deduplication_timeout': self.config.get('deduplication_timeout', 300)
                 }
 
                 success = self.protocol_manager.add_protocol('aprs_main', 'aprs', aprs_config)

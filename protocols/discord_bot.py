@@ -227,40 +227,69 @@ class DiscordBotProtocol(BaseProtocol):
             return False
 
     def _format_message_for_discord(self, message: Message) -> str:
-        """Format message for Discord with rich formatting"""
+        """Format message for Discord with clean, readable formatting"""
 
         # Get message type emoji
         emoji_map = {
-            MessageType.TEXT: "💬",
+            MessageType.TEXT: "📻",
             MessageType.POSITION: "📍",
             MessageType.EMERGENCY: "🚨",
             MessageType.STATUS: "ℹ️"
         }
-        emoji = emoji_map.get(message.message_type, "📨")
+        emoji = emoji_map.get(message.message_type, "📻")
 
-        # Format header
-        header = f"{emoji} **{message.source_id}** ({message.source_protocol})"
+        # Extract callsign (clean version without extra info)
+        callsign = message.source_id
 
-        # Format content
+        # Create QRZ.com link for the callsign (with suppressed preview)
+        # Extract base callsign (remove SSID for QRZ lookup)
+        base_callsign = callsign.split('-')[0] if '-' in callsign else callsign
+        qrz_url = f"https://www.qrz.com/db/{base_callsign}"
+        callsign_link = f"[**{callsign}**](<{qrz_url}>)"  # <> suppresses link preview
+
+        # Clean up the content - remove RARSMS prefix and debug info
         content = message.content or "No content"
 
-        # Add position information if available
-        position_info = ""
-        if hasattr(message, 'get_position') and message.get_position():
-            pos = message.get_position()
-            lat, lon = pos['lat'], pos['lon']
-            map_url = f"https://maps.google.com/?q={lat},{lon}"
-            position_info = f"\n📍 Location: [{lat:.4f}, {lon:.4f}]({map_url})"
+        # Remove RARSMS prefix if present
+        if content.upper().startswith('RARSMS'):
+            content = content[6:].strip()
+            if content.startswith(':'):
+                content = content[1:].strip()
 
-        # Add timestamp
-        timestamp = f"\n🕐 {message.timestamp.strftime('%H:%M:%S UTC')}"
+        # Remove any debug/technical information that may have been appended
+        # This removes text like "From: aprs_main:KK4PWJ-10 addressee: ..."
+        if ' From: ' in content:
+            content = content.split(' From: ')[0].strip()
 
-        # Combine all parts
-        formatted = f"{header}\n{content}{position_info}{timestamp}"
+        # Remove APRS message numbers (like {123)
+        if '{' in content:
+            content = content.split('{')[0].strip()
 
-        # Add reply instructions for APRS messages
-        if message.source_protocol.startswith('aprs'):
-            formatted += f"\n\n*Reply with: `APRS {message.source_id} <your message>`*"
+        # Clean up any remaining technical metadata
+        content = content.split(' addressee: ')[0].strip()
+        content = content.split(' original_message: ')[0].strip()
+        content = content.split(' msg_no: ')[0].strip()
+
+        # Create timestamp (compact format)
+        timestamp = message.timestamp.strftime('%H:%M UTC')
+
+        # For position messages, show a cleaner format
+        if message.message_type == MessageType.POSITION:
+            position_info = ""
+            if hasattr(message, 'get_position') and message.get_position():
+                pos = message.get_position()
+                lat, lon = pos['lat'], pos['lon']
+                map_url = f"https://maps.google.com/?q={lat},{lon}"
+                position_info = f" • [View on Map](<{map_url}>)"  # <> suppresses link preview
+
+            formatted = f"{emoji} {callsign_link} *{timestamp}* sent position update{position_info}"
+        else:
+            # Text message format - 3 lines: radio+callsign+timestamp, content, reply instructions
+            formatted = f"{emoji} {callsign_link} *{timestamp}*\n{content}"
+
+            # Add reply instructions for APRS messages (simplified)
+            if message.source_protocol.startswith('aprs'):
+                formatted += f"\nReply: `APRS {callsign} your message here`"
 
         return formatted
 

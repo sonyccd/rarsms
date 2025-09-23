@@ -43,7 +43,7 @@ class APRSProtocol(BaseProtocol):
 
         # Message deduplication
         self.message_cache = {}  # Cache recent messages to prevent duplicates
-        self.cache_timeout = 120  # 2 minutes cache timeout (reduced for better testing)
+        self.cache_timeout = config.get('deduplication_timeout', 300)  # Configurable timeout in seconds
 
     def get_capabilities(self) -> ProtocolCapabilities:
         """APRS capabilities"""
