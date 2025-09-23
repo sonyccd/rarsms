@@ -1,9 +1,2 @@
-# This file tells GitHub Pages to skip Jekyll processing
-# and serve the repository as static files only.
-#
-# This is useful for projects that:
-# 1. Have their own static site (like index.html)
-# 2. Want to avoid Jekyll build issues
-# 3. Don't need Jekyll's templating features
-#
-# To use Jekyll instead, delete this file and keep _config.yml
+# Static HTML Mode - No Jekyll Processing
+# This file ensures GitHub Pages serves files directly without Jekyll processing
