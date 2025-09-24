@@ -5,7 +5,8 @@ RUN apk add --no-cache \
     ca-certificates \
     unzip \
     wget \
-    curl
+    curl \
+    jq
 
 # Create app directory
 WORKDIR /pb
@@ -20,8 +21,14 @@ RUN LATEST_VERSION=$(wget -qO- https://api.github.com/repos/pocketbase/pocketbas
 # Create data directory
 RUN mkdir -p /pb/pb_data /pb/pb_public
 
+# Copy setup script
+COPY setup.sh /pb/setup.sh
+
+# Make setup script executable
+RUN chmod +x /pb/setup.sh
+
 # Expose port
 EXPOSE 8090
 
-# Run PocketBase
-CMD ["./pocketbase", "serve", "--http=0.0.0.0:8090"]
+# Run setup script
+CMD ["./setup.sh"]
