@@ -112,17 +112,22 @@ import_collections() {
 
     echo -e "${BLUE}📦 Importing collection schemas...${NC}"
 
+    # Create proper import payload
+    echo "{\"collections\": $(cat "$COLLECTIONS_FILE"), \"deleteMissing\": false}" > /tmp/import_payload.json
+
+    echo -e "${BLUE}🔍 Debug: Payload size: $(wc -c < /tmp/import_payload.json) bytes${NC}"
+
     local response=$(curl -s -X PUT http://localhost:8090/api/collections/import \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer ${token}" \
-        -d "{\"collections\": $(cat "$COLLECTIONS_FILE"), \"deleteMissing\": false}")
+        -d @/tmp/import_payload.json)
 
-    if echo "$response" | grep -q '"collections"'; then
+    if [ -z "$response" ] || echo "$response" | grep -q '204\|200'; then
         echo -e "${GREEN}✅ Collections imported successfully!${NC}"
 
-        # List imported collections
+        # List the collections from the JSON file
         echo -e "${BLUE}📋 Imported collections:${NC}"
-        echo "$response" | grep -o '"name":"[^"]*' | cut -d'"' -f4 | sed 's/^/   - /'
+        cat "$COLLECTIONS_FILE" | jq -r '.[].name' | sed 's/^/   - /'
         return 0
     else
         echo -e "${RED}❌ Failed to import collections${NC}"

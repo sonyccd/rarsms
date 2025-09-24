@@ -21,11 +21,25 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./pocketbase/pb_data:/pb/pb_data
-      - ./pocketbase/pb_public:/pb/pb_public
+      - pocketbase_data:/pb/pb_data
+      - pocketbase_public:/pb/pb_public
       - ./pocketbase_collections.json:/pb/pocketbase_collections.json:ro
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8090/api/health"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+volumes:
+  pocketbase_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pocketbase/pb_data
+  pocketbase_public:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/pocketbase/pb_public

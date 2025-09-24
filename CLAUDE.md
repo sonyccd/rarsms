@@ -22,6 +22,7 @@ The application is a multi-container system with the following key components:
 - **Live APRS Viewer**: Web interface displaying real-time APRS packets with geographic data
 - **Management Interface**: Role-based admin panel for callsign and configuration management
 - **User Authentication**: Role-based access control (admin/user roles)
+- **Persistent Storage**: Docker volumes for database and static files
 
 ### Configuration Hierarchy
 
@@ -73,11 +74,21 @@ docker compose logs pocketbase
 # View APRS bridge logs
 docker compose logs rarsms
 
-# Stop all services
+# Stop all services (preserves data in volumes)
 docker compose down
+
+# Complete reset (WARNING: deletes all data including host files)
+docker compose down -v && rm -rf ./pocketbase/pb_data/*
+
+# Or use the helper script
+./reset.sh
 
 # Restart after changes
 docker compose restart
+
+# View volume information
+docker volume ls
+docker volume inspect rarsms_pocketbase_data
 ```
 
 ### Configuration Setup (Advanced)
@@ -107,8 +118,8 @@ The PocketBase container includes an automated setup script (`pocketbase/setup.s
 1. **Detects New Installation**: Checks if `pb_data/data.db` exists
 2. **Creates Super Admin**: Uses `pocketbase superuser` command with generated credentials
 3. **Displays Credentials**: Shows admin email/password in colored, prominent format in logs
-4. **Attempts Collection Import**: Tries to import database schema via API
-5. **Graceful Fallbacks**: Continues operation even if import fails
+4. **Graceful Operation**: Continues successfully even if optional collection import is not completed
+5. **Manual Collection Setup**: Provides clear instructions for completing setup via admin interface
 
 **Setup Process:**
 ```
@@ -139,10 +150,61 @@ Password: [16-character random password]
 - Can be created through PocketBase admin panel
 - Role field determines access level (`admin` or `user`)
 
-To create additional admin users:
-1. Access PocketBase admin panel at http://localhost:8090/_/
-2. Navigate to Collections → users → Records
-3. Create new user with `role: "admin"`
+### Post-Setup Configuration
+
+**Complete the setup** (one-time only):
+1. Access PocketBase admin panel at http://localhost:8090/_/ with generated credentials
+2. **Add role field to users collection**:
+   - Go to Collections → users → Settings → Fields
+   - Click "+ New field" → Select type → add `role` field with options: `user`, `admin`
+3. **Import additional collections** (optional):
+   - Go to Settings → Import collections
+   - Upload `/home/brad/Dev/rarsms/pocketbase_collections.json`
+
+**Create additional admin users**:
+1. Navigate to Collections → users → Records
+2. Create new user with `role: "admin"`
+
+### Data Persistence
+
+RARSMS uses Docker volumes for persistent data storage:
+
+**Volume Structure:**
+```
+rarsms_pocketbase_data/     # Database files, configurations, logs
+  ├── data.db              # Main SQLite database
+  ├── logs.db              # System logs
+  └── backups/             # Automatic backups
+
+rarsms_pocketbase_public/   # Static web files
+  ├── index.html           # Live APRS viewer
+  ├── app.js               # Frontend application
+  └── assets/              # Static assets
+```
+
+**Volume Management:**
+- **Automatic creation**: Volumes created on first `docker compose up`
+- **Data persistence**: Database survives container restarts and rebuilds
+- **Backup location**: `./pocketbase/pb_data/` (bound to host filesystem)
+- **Web files**: `./pocketbase/pb_public/` (bound to host filesystem)
+
+**Data Safety:**
+```bash
+# Safe restart (preserves all data)
+docker compose restart
+
+# Safe rebuild (preserves all data)
+docker compose down && docker compose up --build
+
+# DANGER: Complete reset (deletes all data)
+docker compose down -v && rm -rf ./pocketbase/pb_data/*
+
+# Or use the helper script (includes safety prompt)
+./reset.sh
+
+# Alternative: Reset just database (keeps web files)
+rm -rf ./pocketbase/pb_data/* && docker compose restart pocketbase
+```
 
 ## Key Implementation Details
 
