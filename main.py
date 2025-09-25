@@ -14,6 +14,7 @@ from protocols.manager import ProtocolManager
 from protocols.aprs import APRSProtocol
 from protocols.discord import DiscordProtocol
 from protocols.discord_bot import DiscordBotProtocol
+from protocols.pocketbase_protocol import PocketBaseProtocol
 from protocols.base import MessageType
 
 # Legacy notification system removed
@@ -156,6 +157,7 @@ class RARSMSBridge:
         self.protocol_manager.register_protocol_type('aprs', APRSProtocol)
         self.protocol_manager.register_protocol_type('discord', DiscordProtocol)
         self.protocol_manager.register_protocol_type('discord_bot', DiscordBotProtocol)
+        self.protocol_manager.register_protocol_type('pocketbase', PocketBaseProtocol)
 
     def setup_protocols(self):
         """Setup protocol instances from configuration"""
@@ -238,6 +240,22 @@ class RARSMSBridge:
                 logger.info("  → Set DISCORD_BOT_TOKEN + DISCORD_CHANNEL_ID for bidirectional communication")
                 logger.info("  → Or set DISCORD_WEBHOOK_URL for one-way APRS→Discord messages")
 
+            # Setup PocketBase protocol for message storage
+            pocketbase_url = self.config.get('pocketbase_url', 'http://localhost:8090')
+            if pocketbase_url:
+                pocketbase_config = {
+                    'pocketbase_url': pocketbase_url,
+                    'collection_name': 'messages'
+                }
+
+                success = self.protocol_manager.add_protocol('pocketbase_storage', 'pocketbase', pocketbase_config)
+                if success:
+                    logger.info("✓ PocketBase storage configured successfully")
+                else:
+                    logger.error("✗ Failed to configure PocketBase storage")
+            else:
+                logger.info("⚠ PocketBase storage not configured - no URL specified")
+
             # Setup additional protocols from configuration
             protocols_config = self.config.get('protocols', {}) or {}
             for protocol_name, protocol_config in protocols_config.items():
@@ -266,11 +284,24 @@ class RARSMSBridge:
             else:
                 logger.info("🚫 APRS position updates are blocked by configuration")
 
+            # Default routing: APRS <-> Discord + store all in PocketBase
+            discord_targets = ['discord_main', 'pocketbase_storage']
+            aprs_targets = ['aprs_main', 'pocketbase_storage']
+
+            # Route APRS messages to Discord and PocketBase
             self.protocol_manager.add_routing_rule(
                 source_protocols=['aprs_main'],
-                target_protocols=['discord_main'],
+                target_protocols=discord_targets,
                 message_types=message_types,
-                bidirectional=True
+                bidirectional=False
+            )
+
+            # Route Discord messages to APRS and PocketBase
+            self.protocol_manager.add_routing_rule(
+                source_protocols=['discord_main'],
+                target_protocols=aprs_targets,
+                message_types=[MessageType.TEXT],  # Only text messages from Discord
+                bidirectional=False
             )
 
             # Load custom routing rules from configuration

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RARSMS Live - APRS Message Feed</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e9ecef;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: #2d3748;
+            border-right: 1px solid #4a5568;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .app-subtitle {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #a0aec0;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #4a5568;
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background-color: #4a5568;
+            color: #ffffff;
+            border-right: 3px solid #63b3ed;
+        }
+
+        .nav-icon {
+            width: 1.25rem;
+            margin-right: 0.75rem;
+        }
+
+        .admin-lock {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: #f6e05e;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid #4a5568;
+        }
+
+        .status-indicators {
+            font-size: 0.75rem;
+            color: #a0aec0;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .message-feed {
+            background: #2d3748;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .feed-header {
+            background-color: #4a5568;
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+        }
+
+        .messages-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .message {
+            border-bottom: 1px solid #4a5568;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .message:hover {
+            background-color: #374151;
+        }
+
+        .message:last-child {
+            border-bottom: none;
+        }
+
+        .message-new {
+            background-color: #1e3a8a;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .message-time {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.75rem;
+        }
+
+        .message-callsign {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .empty-feature-icon {
+            font-size: 1.25rem;
+        }
+
+        .loading-spinner {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .management-panel {
+            background: #2d3748;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: #4a5568;
+            color: white;
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #a0aec0;
+        }
+
+        .empty-search {
+            text-align: center;
+            color: #a0aec0;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+
+
+
+
+
+        .logout-btn {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+
+    </style>
+</head>
+<body data-bs-theme="dark">
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">RARSMS</h1>
+                <div class="app-subtitle">Amateur Radio Bridge</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Monitoring</div>
+                    <button class="nav-item nav-tab active" data-tab="live-feed">
+                        <i class="bi bi-broadcast nav-icon"></i>
+                        Live Feed
+                    </button>
+                    <button class="nav-item nav-tab" data-tab="statistics">
+                        <i class="bi bi-bar-chart nav-icon"></i>
+                        Statistics
+                    </button>
+                    <button class="nav-item nav-tab" data-tab="search">
+                        <i class="bi bi-search nav-icon"></i>
+                        Search
+                    </button>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <button class="nav-item nav-tab admin-required" data-tab="callsigns">
+                        <i class="bi bi-people nav-icon"></i>
+                        Callsigns
+                        <i class="bi bi-lock admin-lock"></i>
+                    </button>
+                    <button class="nav-item nav-tab admin-required" data-tab="config">
+                        <i class="bi bi-gear nav-icon"></i>
+                        Configuration
+                        <i class="bi bi-lock admin-lock"></i>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicators">
+                    <div id="connection-status" class="status-indicator status-loading">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Connecting...</span>
+                    </div>
+                    <div id="message-count" class="status-indicator">
+                        <i class="bi bi-bar-chart me-1"></i>
+                        <span id="count">0</span> messages
+                    </div>
+                    <div id="admin-status" class="status-indicator admin-indicator" style="display: none;">
+                        <i class="bi bi-person-fill me-1"></i>
+                        <span id="admin-info">Admin</span>
+                        <button id="logout-btn" class="btn btn-outline-light btn-sm logout-btn ms-2">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+        <!-- Tab Content -->
+        <div id="live-feed" class="tab-content active">
+            <div class="message-feed">
+                <div class="feed-header d-flex align-items-center justify-content-center">
+                    <i class="bi bi-broadcast text-danger me-2"></i>
+                    Live APRS Message Feed
+                </div>
+            <div id="messages-container" class="messages-container">
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="bi bi-radio" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3>Welcome to RARSMS Live Feed!</h3>
+                    <p>This system bridges amateur radio APRS traffic to Discord and provides real-time monitoring.</p>
+                    <div class="row g-3 my-4">
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-arrow-repeat empty-feature-icon"></i>
+                                <span>Real-time WebSocket updates</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-geo-alt empty-feature-icon"></i>
+                                <span>Geographic packet filtering</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-people empty-feature-icon"></i>
+                                <span>Authorized callsign management</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-bar-chart empty-feature-icon"></i>
+                                <span>Message analytics & statistics</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="empty-state-note text-muted">Waiting for APRS messages to appear here...</p>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Callsigns Tab -->
+        <div id="callsigns" class="tab-content">
+            <div class="management-panel">
+                <div class="panel-header d-flex justify-content-between align-items-center p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Authorized Callsigns
+                    </h2>
+                    <button id="add-callsign-btn" class="btn btn-secondary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Callsign
+                    </button>
+                </div>
+                <div id="callsigns-list" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading callsigns...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="statistics" class="tab-content">
+            <div class="management-panel">
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        System Statistics
+                    </h2>
+                </div>
+                <div id="stats-content" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading statistics...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Tab -->
+        <div id="search" class="tab-content">
+            <div class="management-panel">
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-search me-2"></i>
+                        Message Search
+                    </h2>
+                </div>
+                <div class="p-3 bg-dark border-bottom border-secondary">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" id="search-input" placeholder="Search messages..." class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="search-filter" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="text">Text Messages</option>
+                                <option value="position">Position Updates</option>
+                                <option value="status">Status Messages</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="search-btn" class="btn btn-primary w-100">
+                                <i class="bi bi-search me-1"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="search-results" class="p-3">
+                    <div class="empty-search text-muted">Enter search terms above</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div id="config" class="tab-content">
+            <div class="management-panel">
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        System Configuration
+                    </h2>
+                </div>
+                <div id="config-content" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading configuration...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Admin Login Modal -->
+    <div class="modal fade" id="login-modal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title" id="loginModalLabel">
+                        <i class="bi bi-lock me-2"></i>
+                        Admin Login Required
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" id="modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Administrator access is required to manage callsigns and system configuration.</p>
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="admin-email" class="form-label">Email:</label>
+                            <input type="email" id="admin-email" class="form-control" required placeholder="admin@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="admin-password" class="form-label">Password:</label>
+                            <input type="password" id="admin-password" class="form-control" required placeholder="Enter password">
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" id="cancel-login" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" id="submit-login" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <div id="login-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PocketBase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.1/dist/pocketbase.umd.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
