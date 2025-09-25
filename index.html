@@ -307,16 +307,16 @@
 
         <div class="main-content">
             <div class="section">
-                <h2>🌐 Universal Communication Bridge</h2>
-                <p>RARSMS is a universal communication bridge that seamlessly connects amateur radio (APRS) with modern messaging platforms like Discord. Built with intelligent protocol adaptation, it enables bidirectional message routing with smart content prioritization to ensure critical information is preserved across different platform limitations.</p>
+                <h2>🌐 Universal Communication Bridge with Live Web Interface</h2>
+                <p>RARSMS is a modern universal communication bridge that seamlessly connects amateur radio (APRS) with Discord and features a comprehensive web interface. Built with intelligent protocol adaptation and real-time monitoring, it provides live APRS packet viewing, role-based administration, configuration management, and comprehensive testing infrastructure for reliable 24/7 amateur radio operations.</p>
                 
                 <div class="network-flow">
                     <div class="hub-container">
                         <div class="network-box hub">RARSMS</div>
                         <div class="network-box spoke spoke-1">APRS-IS</div>
                         <div class="network-box spoke spoke-2">Discord</div>
-                        <div class="network-box spoke spoke-3">File Logging</div>
-                        <div class="network-box spoke spoke-4">Future</div>
+                        <div class="network-box spoke spoke-3">Web Interface</div>
+                        <div class="network-box spoke spoke-4">PocketBase</div>
                         
                         <div class="connection-line line-1"></div>
                         <div class="connection-line line-2"></div>
@@ -368,6 +368,26 @@
                         <h4>🔗 QRZ.com Integration</h4>
                         <p>Callsigns in Discord are clickable links to QRZ.com profiles, making it easy to look up operator information with suppressed link previews for clean display.</p>
                     </div>
+
+                    <div class="feature-card">
+                        <h4>🌐 Live Web Interface</h4>
+                        <p>Real-time APRS packet viewer with WebSocket updates, message search, statistics dashboard, and role-based administration panel for complete system management.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>👥 Role-based Authentication</h4>
+                        <p>Secure admin authentication with user roles, callsign management, system configuration, and comprehensive testing infrastructure accessible via web interface.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>📊 Real-time Analytics</h4>
+                        <p>Live statistics tracking message counts, protocol distribution, today's activity, and system health with beautiful visual dashboards and charts.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4>🧪 Comprehensive Testing</h4>
+                        <p>Complete frontend and backend test suites with 16+ unit tests, automated infrastructure validation, and quality assurance for production reliability.</p>
+                    </div>
                 </div>
             </div>
 
@@ -400,6 +420,18 @@
                         <h4>📝 YAML Configuration</h4>
                         <p>Flexible routing rules</p>
                     </div>
+                    <div class="tech-item">
+                        <h4>💾 PocketBase Database</h4>
+                        <p>Real-time database with WebSockets</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>🌐 Modern Web Interface</h4>
+                        <p>Responsive admin dashboard</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>🧪 Testing Infrastructure</h4>
+                        <p>Frontend & backend test suites</p>
+                    </div>
                 </div>
 
                 <h3 style="margin-top: 30px;">🔧 Configuration Highlights</h3>
@@ -429,36 +461,49 @@ deduplication_timeout: 300  # seconds (5 minutes default)<br/>
                     <li>✅ Intelligent message adaptation</li>
                     <li>✅ Callsign authorization whitelist</li>
                     <li>✅ Clean Discord message formatting with clickable callsigns</li>
-                    <li>✅ Docker containerization</li>
-                    <li>✅ Graceful error handling</li>
+                    <li>✅ Docker containerization with zero-configuration deployment</li>
+                    <li>✅ Graceful error handling and automatic reconnection</li>
                     <li>✅ APRS message format compliance</li>
-                    <li>✅ Comprehensive test suite</li>
+                    <li>✅ <strong>Live Web Interface</strong> with real-time APRS packet viewing</li>
+                    <li>✅ <strong>PocketBase Database</strong> with WebSocket real-time updates</li>
+                    <li>✅ <strong>Role-based Authentication</strong> with admin/user roles</li>
+                    <li>✅ <strong>Configuration Management</strong> via web forms (APRS, Discord, filtering)</li>
+                    <li>✅ <strong>Statistics Dashboard</strong> with protocol analytics and message counts</li>
+                    <li>✅ <strong>Message Search</strong> with full-text filtering capabilities</li>
+                    <li>✅ <strong>Callsign Management</strong> with CRUD operations via web interface</li>
+                    <li>✅ <strong>Comprehensive Testing</strong> - 16+ frontend unit tests + backend test suite</li>
+                    <li>✅ <strong>Automated Setup</strong> with random admin password generation</li>
                 </ul>
 
                 <h3>🔄 Active Development</h3>
                 <ul style="margin-left: 20px; margin-bottom: 20px;">
-                    <li>🔄 Enhanced position packet handling</li>
+                    <li>🔄 Enhanced position packet handling with map integration</li>
                     <li>🔄 Message threading and conversation tracking</li>
-                    <li>🔄 Web dashboard integration</li>
+                    <li>🔄 Advanced analytics and reporting features</li>
                 </ul>
 
                 <h3>📋 Future Roadmap</h3>
                 <ul style="margin-left: 20px;">
-                    <li>⏳ Web dashboard for message history</li>
-                    <li>⏳ System monitoring and analytics</li>
-                    <li>⏳ Additional protocol support</li>
-                    <li>⏳ Advanced routing rules</li>
+                    <li>⏳ TARPN Network protocol integration</li>
+                    <li>⏳ Winlink gateway support</li>
+                    <li>⏳ Mobile-responsive progressive web app</li>
+                    <li>⏳ Multi-protocol message routing</li>
+                    <li>⏳ Advanced filtering and automation rules</li>
+                    <li>⏳ Integration with other amateur radio software</li>
                 </ul>
             </div>
 
             <div class="section">
                 <h2>📋 How It Works</h2>
                 <ol style="margin-left: 20px; line-height: 2;">
+                    <li><strong>Deploy with Docker</strong> using zero-configuration setup: <code>docker compose up --build</code></li>
+                    <li><strong>Access the web interface</strong> at <code>http://localhost:8090/</code> for live APRS monitoring</li>
+                    <li><strong>Login as admin</strong> using generated credentials to manage callsigns and configuration</li>
                     <li><strong>Send a message</strong> to <span class="callsign">RARSMS</span> via APRS from your authorized callsign</li>
-                    <li><strong>Message appears</strong> instantly in our Discord channel with your callsign and content</li>
-                    <li><strong>Club members respond</strong> using Discord's reply feature to create a threaded conversation</li>
-                    <li><strong>Replies are routed back</strong> to your APRS station automatically</li>
-                    <li><strong>View the conversation</strong> in the web dashboard for complete message history</li>
+                    <li><strong>Watch messages appear</strong> instantly in both the web interface and Discord channel</li>
+                    <li><strong>Club members respond</strong> using Discord's reply feature to create threaded conversations</li>
+                    <li><strong>Monitor activity</strong> through the statistics dashboard with real-time analytics</li>
+                    <li><strong>Search message history</strong> and manage system configuration via the web interface</li>
                 </ol>
             </div>
 

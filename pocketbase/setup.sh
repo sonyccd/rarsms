@@ -136,6 +136,62 @@ import_collections() {
     fi
 }
 
+# Function to setup users collection with role field
+setup_users_collection() {
+    local token="$1"
+
+    echo -e "${BLUE}🔧 Adding role field to users collection...${NC}"
+
+    # Add role field to users collection
+    local update_response=$(curl -s -X PATCH http://localhost:8090/api/collections/_pb_users_auth_ \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${token}" \
+        -d '{
+            "fields": [
+                {
+                    "id": "users_role",
+                    "name": "role",
+                    "type": "select",
+                    "required": false,
+                    "presentable": false,
+                    "unique": false,
+                    "options": {
+                        "maxSelect": 1,
+                        "values": ["admin", "user"]
+                    }
+                }
+            ]
+        }')
+
+    if echo "$update_response" | grep -q '"id"'; then
+        echo -e "${GREEN}✅ Role field added to users collection${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Role field may already exist or update failed${NC}"
+    fi
+
+    # Create admin user with role
+    echo -e "${BLUE}👤 Creating admin user in users collection...${NC}"
+    local user_response=$(curl -s -X POST http://localhost:8090/api/collections/users/records \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${token}" \
+        -d "{
+            \"email\": \"admin@rarsms.local\",
+            \"emailVisibility\": true,
+            \"password\": \"${ADMIN_PASSWORD}\",
+            \"passwordConfirm\": \"${ADMIN_PASSWORD}\",
+            \"role\": \"admin\",
+            \"verified\": true
+        }")
+
+    if echo "$user_response" | grep -q '"id"'; then
+        echo -e "${GREEN}✅ Admin user created in users collection${NC}"
+        return 0
+    else
+        echo -e "${YELLOW}⚠️  Admin user creation failed - user may already exist${NC}"
+        return 0  # Don't fail setup for this
+    fi
+}
+
 # Main setup function
 main() {
     # Check if this is a new installation
@@ -180,6 +236,14 @@ main() {
             echo -e "${YELLOW}⚠️  Collection import failed - you can import manually${NC}"
             echo -e "${BLUE}💡 Collections file location: /pb/pocketbase_collections.json${NC}"
         fi
+    fi
+
+    # Setup users collection with role field and admin user
+    echo -e "${BLUE}👥 Setting up users collection and admin user...${NC}"
+    if setup_users_collection "$admin_token"; then
+        echo -e "${GREEN}✅ Users collection configured successfully!${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Users collection setup failed - manual setup required${NC}"
     fi
 
     echo -e "${GREEN}🎉 RARSMS PocketBase setup completed!${NC}"

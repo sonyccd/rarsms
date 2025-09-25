@@ -22,6 +22,9 @@ The application is a multi-container system with the following key components:
 - **Live APRS Viewer**: Web interface displaying real-time APRS packets with geographic data
 - **Management Interface**: Role-based admin panel for callsign and configuration management
 - **User Authentication**: Role-based access control (admin/user roles)
+- **Configuration Management**: Web-based forms for APRS, Discord, filtering, and database settings
+- **Statistics Dashboard**: Real-time message analytics with protocol breakdown
+- **Search Interface**: Full-text search across all messages with filtering
 - **Persistent Storage**: Docker volumes for database and static files
 
 ### Configuration Hierarchy
@@ -57,9 +60,22 @@ docker compose logs -f pocketbase
 - ✅ Starts live APRS viewer with role-based authentication
 
 ### Access Points
-- **Admin Panel**: http://localhost:8090/_/ (use generated credentials)
 - **Live APRS Viewer**: http://localhost:8090/ (public access)
-- **Management Interface**: Login required for callsign/config management
+  - Real-time message feed with WebSocket updates
+  - Statistics dashboard with protocol breakdown
+  - Message search with full-text filtering
+  - Admin authentication for management features
+- **Admin Panel**: http://localhost:8090/_/ (use generated credentials)
+  - Direct PocketBase database administration
+  - User management and role assignment
+  - Collection schema management
+- **Management Interface**: Integrated into live viewer (admin login required)
+  - Callsign management (add/remove/toggle authorized callsigns)
+  - System configuration (APRS, Discord, filtering settings)
+  - Real-time statistics and analytics
+- **Test Suite**: http://localhost:8090/test.html (admin access via 🧪 Tests link)
+  - Frontend unit tests with visual results
+  - Authentication, configuration, and validation testing
 
 ## Development Commands
 
@@ -100,6 +116,27 @@ cp .env.example .env
 # - APRS_CALLSIGN: Your amateur radio callsign
 # - APRS_PASSCODE: Calculate at https://apps.magicbug.co.uk/passcode/
 # - DISCORD_WEBHOOK_URL: Discord channel webhook URL
+```
+
+### Testing Commands
+```bash
+# Frontend tests (visual results in browser)
+open http://localhost:8090/test.html
+
+# Backend tests (Python pytest suite)
+python3 run_tests.py
+
+# Run specific backend test category
+python3 run_tests.py aprs
+
+# Run tests with coverage reporting
+python3 run_tests.py --coverage
+
+# Validate complete test infrastructure
+./validate_tests.sh
+
+# PocketBase integration tests
+./test_pocketbase.sh
 ```
 
 ### Local Development

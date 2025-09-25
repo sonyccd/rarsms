@@ -4,108 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RARSMS Live - APRS Message Feed</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
+            background-color: #1a1a1a;
+            color: #e9ecef;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .app-layout {
+            display: flex;
             min-height: 100vh;
-            color: #333;
         }
 
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            text-align: center;
-            color: #4a5568;
-            margin-bottom: 10px;
-            font-size: 2rem;
-        }
-
-        .status-bar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .status-connected {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .status-disconnected {
-            background: #fed7e2;
-            color: #702459;
-        }
-
-        .status-loading {
-            background: #fefcbf;
-            color: #744210;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 20px 40px 20px;
-        }
-
-        .message-feed {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            overflow: hidden;
-            min-height: 600px;
+        .sidebar {
+            width: 280px;
+            background-color: #2d3748;
+            border-right: 1px solid #4a5568;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
         }
 
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .app-subtitle {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #a0aec0;
+            padding: 0 1rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: none;
+            text-align: left;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #4a5568;
+            color: #ffffff;
+        }
+
+        .nav-item.active {
+            background-color: #4a5568;
+            color: #ffffff;
+            border-right: 3px solid #63b3ed;
+        }
+
+        .nav-icon {
+            width: 1.25rem;
+            margin-right: 0.75rem;
+        }
+
+        .admin-lock {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: #f6e05e;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid #4a5568;
+        }
+
+        .status-indicators {
+            font-size: 0.75rem;
+            color: #a0aec0;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .message-feed {
+            background: #2d3748;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
         .feed-header {
-            background: #667eea;
+            background-color: #4a5568;
             color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 1.2rem;
+            padding: 1rem;
             font-weight: 600;
         }
 
         .messages-container {
-            flex: 1;
-            overflow-y: auto;
             max-height: 70vh;
-            padding: 20px 0;
+            overflow-y: auto;
         }
 
         .message {
-            padding: 15px 25px;
-            border-bottom: 1px solid #e2e8f0;
-            transition: background-color 0.3s ease;
-            animation: slideIn 0.3s ease-out;
+            border-bottom: 1px solid #4a5568;
+            transition: background-color 0.15s ease-in-out;
         }
 
         .message:hover {
-            background: #f7fafc;
+            background-color: #374151;
         }
 
         .message:last-child {
@@ -113,135 +159,44 @@
         }
 
         .message-new {
-            background: #e6fffa;
-            border-left: 4px solid #38b2ac;
-        }
-
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
+            background-color: #1e3a8a;
+            border-left: 4px solid #3b82f6;
         }
 
         .message-time {
-            color: #718096;
-            font-size: 0.85rem;
-            font-family: monospace;
-            background: #f7fafc;
-            padding: 2px 8px;
-            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.75rem;
         }
 
         .message-callsign {
-            font-weight: bold;
-            color: #3182ce;
-            text-decoration: none;
-            font-family: monospace;
-            font-size: 1rem;
-        }
-
-        .message-callsign:hover {
-            text-decoration: underline;
-        }
-
-        .message-type {
-            font-size: 0.8rem;
-            padding: 2px 8px;
-            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .type-text {
-            background: #bee3f8;
-            color: #2a69ac;
-        }
-
-        .type-position {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .type-status {
-            background: #fbb6ce;
-            color: #702459;
-        }
-
-        .type-emergency {
-            background: #fed7e2;
-            color: #c53030;
-            animation: pulse 2s infinite;
-        }
-
-        .message-content {
-            font-size: 1rem;
-            line-height: 1.4;
-            color: #2d3748;
-            margin-bottom: 8px;
-        }
-
-        .message-position {
-            font-size: 0.9rem;
-            color: #4a5568;
-            background: #f0fff4;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border-left: 3px solid #38a169;
-            margin-top: 8px;
-        }
-
-        .position-link {
-            color: #3182ce;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .position-link:hover {
-            text-decoration: underline;
-        }
-
-        .message-protocol {
-            font-size: 0.8rem;
-            color: #718096;
-            background: #f7fafc;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #718096;
+            padding: 3rem 2rem;
+            color: #a0aec0;
         }
 
         .empty-state-icon {
             font-size: 3rem;
-            margin-bottom: 20px;
-            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        .empty-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .empty-feature-icon {
+            font-size: 1.25rem;
         }
 
         .loading-spinner {
-            border: 3px solid #e2e8f0;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            width: 1rem;
+            height: 1rem;
         }
 
         @keyframes pulse {
@@ -255,66 +210,24 @@
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.5rem;
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
 
-            .status-bar {
-                gap: 10px;
+            .sidebar.show {
+                transform: translateX(0);
             }
 
-            .message-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .message-time {
-                align-self: flex-end;
-            }
-
-            .container {
-                padding: 0 10px 20px 10px;
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
             }
         }
 
-        /* Navigation Tabs */
-        .nav-tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px 15px 0 0;
-            padding: 10px 20px;
-            margin-bottom: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .nav-tab {
-            background: transparent;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #718096;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .nav-tab:hover {
-            background: #f7fafc;
-            color: #4a5568;
-        }
-
-        .nav-tab.active {
-            background: #667eea;
-            color: white;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-        }
-
-        /* Tab Content */
         .tab-content {
             display: none;
         }
@@ -323,544 +236,148 @@
             display: block;
         }
 
-        /* Management Panels */
         .management-panel {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: #2d3748;
+            border-radius: 8px;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
             overflow: hidden;
-            min-height: 600px;
         }
 
         .panel-header {
-            background: #667eea;
+            background-color: #4a5568;
             color: white;
-            padding: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .panel-header h2 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: white;
-            border: none;
-        }
-
-        .btn-primary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border-color: rgba(255, 255, 255, 0.5);
         }
 
         .loading-placeholder {
             text-align: center;
-            padding: 60px 20px;
-            color: #718096;
-            font-size: 1.1rem;
-        }
-
-        /* Search Controls */
-        .search-controls {
-            padding: 25px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .search-box, .search-filter {
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .search-box:focus, .search-filter:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .search-results, .callsigns-grid, .stats-grid, .config-sections {
-            padding: 25px;
+            padding: 3rem 1rem;
+            color: #a0aec0;
         }
 
         .empty-search {
             text-align: center;
-            color: #718096;
+            color: #a0aec0;
             font-style: italic;
-            padding: 40px 20px;
+            padding: 2rem;
         }
 
-        /* Mobile adjustments for new elements */
-        @media (max-width: 768px) {
-            .nav-tabs {
-                padding: 10px;
-                gap: 5px;
-            }
 
-            .nav-tab {
-                padding: 10px 12px;
-                font-size: 0.8rem;
-            }
 
-            .panel-header {
-                padding: 20px;
-                flex-direction: column;
-                align-items: stretch;
-            }
 
-            .search-controls {
-                padding: 15px;
-                flex-direction: column;
-                align-items: stretch;
-            }
 
-            .search-box, .search-filter {
-                min-width: auto;
-            }
-        }
-
-        /* Callsign Cards */
-        .callsign-card {
-            background: #f8f9fa;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .callsign-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-        }
-
-        .callsign-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .callsign-header strong {
-            font-size: 1.2rem;
-            color: #4a5568;
-            font-family: monospace;
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .status-badge.enabled {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .status-badge.disabled {
-            background: #fed7e2;
-            color: #702459;
-        }
-
-        .callsign-description {
-            color: #718096;
-            margin-bottom: 15px;
-            font-style: italic;
-        }
-
-        .callsign-actions {
-            display: flex;
-            gap: 10px;
-        }
-
-        .btn-toggle, .btn-delete {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-toggle {
-            background: #4299e1;
-            color: white;
-        }
-
-        .btn-toggle:hover {
-            background: #3182ce;
-        }
-
-        .btn-delete {
-            background: #f56565;
-            color: white;
-        }
-
-        .btn-delete:hover {
-            background: #e53e3e;
-        }
-
-        /* Statistics Cards */
-        .stats-overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        .stats-details {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-        }
-
-        .stats-details h3 {
-            margin: 0 0 20px 0;
-            color: #4a5568;
-        }
-
-        .type-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .type-stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .type-name {
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .type-count {
-            background: #667eea;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-
-        /* Admin Authentication */
-        .admin-required:not(.admin-unlocked) {
-            opacity: 0.7;
-            cursor: pointer;
-        }
-
-        .admin-required:not(.admin-unlocked):hover {
-            background: #f7fafc;
-            color: #4a5568;
-        }
-
-        .admin-lock {
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
 
         .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            margin-left: 8px;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
         }
 
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
 
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            max-width: 450px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .modal-header {
-            background: #667eea;
-            color: white;
-            padding: 20px 25px;
-            border-radius: 15px 15px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            font-size: 1.3rem;
-            color: white;
-            border: none;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-close:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-body {
-            padding: 25px;
-        }
-
-        .modal-body p {
-            margin: 0 0 20px 0;
-            color: #4a5568;
-            line-height: 1.5;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            border-color: #667eea;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 25px;
-        }
-
-        .btn-secondary {
-            background: #f7fafc;
-            color: #4a5568;
-            border: 2px solid #e2e8f0;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background: #edf2f7;
-            border-color: #cbd5e0;
-        }
-
-        .error-message {
-            background: #fed7e2;
-            color: #702459;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #f56565;
-        }
-
-        /* Mobile modal adjustments */
-        @media (max-width: 768px) {
-            .modal-content {
-                margin: 20px;
-                width: calc(100% - 40px);
-            }
-
-            .modal-header, .modal-body {
-                padding: 20px;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-        }
-
-        /* Notification Styles */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 600;
-            z-index: 1001;
-            animation: slideInRight 0.3s ease-out;
-            max-width: 300px;
-        }
-
-        .notification-success {
-            background: #48bb78;
-        }
-
-        .notification-info {
-            background: #4299e1;
-        }
-
-        .notification-error {
-            background: #f56565;
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
     </style>
 </head>
-<body>
-    <div class="header">
-        <h1>🚀 RARSMS Live</h1>
-        <div class="status-bar">
-            <div id="connection-status" class="status-item status-loading">
-                <div class="loading-spinner"></div>
-                <span>Connecting...</span>
+<body data-bs-theme="dark">
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">RARSMS</h1>
+                <div class="app-subtitle">Amateur Radio Bridge</div>
             </div>
-            <div id="message-count" class="status-item" style="background: #e6fffa; color: #234e52;">
-                📊 <span id="count">0</span> messages
-            </div>
-            <div id="admin-status" class="status-item" style="background: #fbb6ce; color: #702459; display: none;">
-                👤 <span id="admin-info">Admin</span>
-                <button id="logout-btn" class="logout-btn">Logout</button>
-            </div>
-        </div>
-    </div>
 
-    <div class="container">
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <button class="nav-tab active" data-tab="live-feed">📡 Live Feed</button>
-            <button class="nav-tab" data-tab="statistics">📊 Statistics</button>
-            <button class="nav-tab" data-tab="search">🔍 Search</button>
-            <button class="nav-tab admin-required" data-tab="callsigns">
-                👥 Callsigns <span class="admin-lock">🔒</span>
-            </button>
-            <button class="nav-tab admin-required" data-tab="config">
-                ⚙️ Config <span class="admin-lock">🔒</span>
-            </button>
-        </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Monitoring</div>
+                    <button class="nav-item nav-tab active" data-tab="live-feed">
+                        <i class="bi bi-broadcast nav-icon"></i>
+                        Live Feed
+                    </button>
+                    <button class="nav-item nav-tab" data-tab="statistics">
+                        <i class="bi bi-bar-chart nav-icon"></i>
+                        Statistics
+                    </button>
+                    <button class="nav-item nav-tab" data-tab="search">
+                        <i class="bi bi-search nav-icon"></i>
+                        Search
+                    </button>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Administration</div>
+                    <button class="nav-item nav-tab admin-required" data-tab="callsigns">
+                        <i class="bi bi-people nav-icon"></i>
+                        Callsigns
+                        <i class="bi bi-lock admin-lock"></i>
+                    </button>
+                    <button class="nav-item nav-tab admin-required" data-tab="config">
+                        <i class="bi bi-gear nav-icon"></i>
+                        Configuration
+                        <i class="bi bi-lock admin-lock"></i>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="status-indicators">
+                    <div id="connection-status" class="status-indicator status-loading">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        <span>Connecting...</span>
+                    </div>
+                    <div id="message-count" class="status-indicator">
+                        <i class="bi bi-bar-chart me-1"></i>
+                        <span id="count">0</span> messages
+                    </div>
+                    <div id="admin-status" class="status-indicator admin-indicator" style="display: none;">
+                        <i class="bi bi-person-fill me-1"></i>
+                        <span id="admin-info">Admin</span>
+                        <button id="logout-btn" class="btn btn-outline-light btn-sm logout-btn ms-2">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
 
         <!-- Tab Content -->
         <div id="live-feed" class="tab-content active">
             <div class="message-feed">
-                <div class="feed-header">
-                    🔴 Live APRS Message Feed
+                <div class="feed-header d-flex align-items-center justify-content-center">
+                    <i class="bi bi-broadcast text-danger me-2"></i>
+                    Live APRS Message Feed
                 </div>
             <div id="messages-container" class="messages-container">
                 <div id="empty-state" class="empty-state">
-                    <div class="empty-state-icon">📻</div>
-                    <h3>Waiting for messages...</h3>
-                    <p>APRS packets will appear here in real-time</p>
+                    <div class="empty-state-icon">
+                        <i class="bi bi-radio" style="font-size: 3rem;"></i>
+                    </div>
+                    <h3>Welcome to RARSMS Live Feed!</h3>
+                    <p>This system bridges amateur radio APRS traffic to Discord and provides real-time monitoring.</p>
+                    <div class="row g-3 my-4">
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-arrow-repeat empty-feature-icon"></i>
+                                <span>Real-time WebSocket updates</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-geo-alt empty-feature-icon"></i>
+                                <span>Geographic packet filtering</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-people empty-feature-icon"></i>
+                                <span>Authorized callsign management</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="empty-feature">
+                                <i class="bi bi-bar-chart empty-feature-icon"></i>
+                                <span>Message analytics & statistics</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="empty-state-note text-muted">Waiting for APRS messages to appear here...</p>
                 </div>
             </div>
         </div>
@@ -869,12 +386,21 @@
         <!-- Callsigns Tab -->
         <div id="callsigns" class="tab-content">
             <div class="management-panel">
-                <div class="panel-header">
-                    <h2>👥 Authorized Callsigns</h2>
-                    <button id="add-callsign-btn" class="btn-primary">+ Add Callsign</button>
+                <div class="panel-header d-flex justify-content-between align-items-center p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        Authorized Callsigns
+                    </h2>
+                    <button id="add-callsign-btn" class="btn btn-secondary">
+                        <i class="bi bi-plus-circle me-1"></i>
+                        Add Callsign
+                    </button>
                 </div>
-                <div id="callsigns-list" class="callsigns-grid">
-                    <div class="loading-placeholder">Loading callsigns...</div>
+                <div id="callsigns-list" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading callsigns...
+                    </div>
                 </div>
             </div>
         </div>
@@ -882,11 +408,17 @@
         <!-- Statistics Tab -->
         <div id="statistics" class="tab-content">
             <div class="management-panel">
-                <div class="panel-header">
-                    <h2>📊 System Statistics</h2>
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        System Statistics
+                    </h2>
                 </div>
-                <div id="stats-content" class="stats-grid">
-                    <div class="loading-placeholder">Loading statistics...</div>
+                <div id="stats-content" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading statistics...
+                    </div>
                 </div>
             </div>
         </div>
@@ -894,21 +426,35 @@
         <!-- Search Tab -->
         <div id="search" class="tab-content">
             <div class="management-panel">
-                <div class="panel-header">
-                    <h2>🔍 Message Search</h2>
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-search me-2"></i>
+                        Message Search
+                    </h2>
                 </div>
-                <div class="search-controls">
-                    <input type="text" id="search-input" placeholder="Search messages..." class="search-box">
-                    <select id="search-filter" class="search-filter">
-                        <option value="">All Types</option>
-                        <option value="text">Text Messages</option>
-                        <option value="position">Position Updates</option>
-                        <option value="status">Status Messages</option>
-                    </select>
-                    <button id="search-btn" class="btn-primary">Search</button>
+                <div class="p-3 bg-dark border-bottom border-secondary">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" id="search-input" placeholder="Search messages..." class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <select id="search-filter" class="form-select">
+                                <option value="">All Types</option>
+                                <option value="text">Text Messages</option>
+                                <option value="position">Position Updates</option>
+                                <option value="status">Status Messages</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="search-btn" class="btn btn-primary w-100">
+                                <i class="bi bi-search me-1"></i>
+                                Search
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div id="search-results" class="search-results">
-                    <div class="empty-search">Enter search terms above</div>
+                <div id="search-results" class="p-3">
+                    <div class="empty-search text-muted">Enter search terms above</div>
                 </div>
             </div>
         </div>
@@ -916,44 +462,59 @@
         <!-- Configuration Tab -->
         <div id="config" class="tab-content">
             <div class="management-panel">
-                <div class="panel-header">
-                    <h2>⚙️ System Configuration</h2>
+                <div class="panel-header p-3">
+                    <h2 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        System Configuration
+                    </h2>
                 </div>
-                <div id="config-content" class="config-sections">
-                    <div class="loading-placeholder">Loading configuration...</div>
+                <div id="config-content" class="p-3">
+                    <div class="loading-placeholder text-muted">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Loading configuration...
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Admin Login Modal -->
-    <div id="login-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔐 Admin Login Required</h2>
-                <button id="modal-close" class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>Administrator access is required to manage callsigns and system configuration.</p>
-                <form id="login-form">
-                    <div class="form-group">
-                        <label for="admin-email">Email:</label>
-                        <input type="email" id="admin-email" required placeholder="admin@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="admin-password">Password:</label>
-                        <input type="password" id="admin-password" required placeholder="Enter password">
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" id="cancel-login" class="btn-secondary">Cancel</button>
-                        <button type="submit" id="submit-login" class="btn-primary">Login</button>
-                    </div>
-                </form>
-                <div id="login-error" class="error-message" style="display: none;"></div>
+    <div class="modal fade" id="login-modal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title" id="loginModalLabel">
+                        <i class="bi bi-lock me-2"></i>
+                        Admin Login Required
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" id="modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Administrator access is required to manage callsigns and system configuration.</p>
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label for="admin-email" class="form-label">Email:</label>
+                            <input type="email" id="admin-email" class="form-control" required placeholder="admin@example.com">
+                        </div>
+                        <div class="mb-3">
+                            <label for="admin-password" class="form-label">Password:</label>
+                            <input type="password" id="admin-password" class="form-control" required placeholder="Enter password">
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" id="cancel-login" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" id="submit-login" class="btn btn-primary">Login</button>
+                        </div>
+                    </form>
+                    <div id="login-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PocketBase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.1/dist/pocketbase.umd.js"></script>
     <script src="app.js"></script>
 </body>
